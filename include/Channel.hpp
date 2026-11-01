@@ -1,15 +1,31 @@
 #pragma once
 
-#include "Client.hpp"
+#include <cstddef>
+#include <string>
 #include <vector>
 
 struct Channel
 {
-	bool inviteOnly;
+	// Channel name
+	std::string name;
 
-	std::vector<Client> members;
-	std::vector<Client> operators;
+	// Access on invitation only (+i)
+	bool inviteOnly;
+	// Topic changes restricted to operators (+t)
+	bool topicRestricted;
+	// Entry key (+k), empty when disabled
+	std::string key;
+	// Member limit (+l), zero when disabled
+	std::size_t memberLimit;
+
+	// Member client FDs
+	std::vector<int> members;
+	// Operator client FDs (+o)
+	std::vector<int> operators;
+	// Invited client FDs
+	std::vector<int> invited;
 	std::string topic;
 
-	Channel() : inviteOnly(false) {}
+	// Default unrestricted channel
+	Channel() : inviteOnly(false), topicRestricted(false), memberLimit(0) {}
 };
