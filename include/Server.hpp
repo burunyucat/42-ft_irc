@@ -34,7 +34,7 @@ class Server
 		void handlePong();
 		void handleNames();
 		int parsingCommand(std::string line);
-		void handleCommand();
+		void handleRedirectionCommand();
 		
 
 		// Listening socket fd

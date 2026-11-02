@@ -1,7 +1,7 @@
 #include "Server.hpp"
 
 
-void Server::handleCommand()
+void Server::handleRedirectionCommand()
 {
 	if(command.name == "PASS")
 		Server::handlePass();
