@@ -11,6 +11,7 @@ class Server
 {
 	public:
 		Server(int port, const std::string& password);
+		~Server();
 
 		// Main program
 		void run();
