@@ -17,34 +17,20 @@ class Server
 
 	private:
 
-		// Handle PASS command
+		// Handle Command
 		void handlePass();
-		// Handle NICK command
 		void handleNick();
-		// Handle USER command
 		void handleUser();
-		// Handle JOIN command
 		void handleJoin();
-		// Handle PRIVMSG command
 		void handlePrivmsg();
-		// Handle INVITE command
 		void handleInvite();
-		// Handle MODE command
 		void handleMode();
-		// Handle KICK command
 		void handleKick();
-		// Handle TOPIC command
 		void handleTopic();
-
-		// Handle PART command
 		void handlePart();
-		// Handle QUIT command
 		void handleQuit();
-		// Handle PING command
 		void handlePing();
-		// Handle PONG command
 		void handlePong();
-		// Handle NAMES command
 		void handleNames();
 
 		// Listening socket fd
