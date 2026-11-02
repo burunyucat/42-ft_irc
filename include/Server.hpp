@@ -6,6 +6,7 @@
 #include <poll.h>
 #include "Client.hpp"
 #include "Channel.hpp"
+#include "Commands.hpp"
 
 class Server
 {
@@ -16,7 +17,7 @@ class Server
 		void run();
 
 	private:
-
+		Commands command;
 		// Handle Command
 		void handlePass();
 		void handleNick();
@@ -32,6 +33,9 @@ class Server
 		void handlePing();
 		void handlePong();
 		void handleNames();
+		int parsingCommand(std::string line);
+		void handleCommand();
+		
 
 		// Listening socket fd
 		int m_listenFd;

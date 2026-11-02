@@ -9,4 +9,3 @@ struct Commands
 	std::string name;
 	std::vector<std::string> params;
 };
-int parsingCommand(std::string line);
