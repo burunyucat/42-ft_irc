@@ -1,11 +1,14 @@
 #include "Server.hpp"
 #include "Util.hpp"
+#include <cerrno>
 #include <cstddef>
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
+#include <ostream>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 Server::Server(int port, const std::string& password)
@@ -42,12 +45,12 @@ void Server::run()
 		return;
 	}
 
-	// Enable non blocking mode
+	// Set non blocking mode
 	// F_SETFL: sets file status flags
 	// O_NONBLOCK: prevents waiting for I/O readiness.
 	if (fcntl(m_listenFd, F_SETFL, O_NONBLOCK) == -1)
 	{
-		Util::sendErrorMsg("Failed to set non blocking mode to listener socket");
+		Util::sendErrorMsg("Failed to set listener socket non blocking mode");
 		return;
 	}
 
@@ -91,23 +94,79 @@ void Server::run()
 	listener.events = POLLIN; // Notify when a connection is ready to be accepted.
 	m_pollFds.push_back(listener);
 
-	// -1: wait indefinitely for an event on the monitored sockets.
-	if (poll(&m_pollFds[0], m_pollFds.size(), -1) == -1)
+	while (true)
 	{
-		Util::sendErrorMsg("Failed to poll sockets");
-		close(m_listenFd);
-		m_listenFd = -1;
-		return;
-	}
+		// Only process sockets monitored by poll(); newly added clients wait for the next poll().
+		const size_t polledCount = m_pollFds.size();
 
-	// Check revents for every monitored descriptor to identify which socket triggered which events.
-	// Then execute the appropriate code.
-	for (size_t i = 0; i < m_pollFds.size(); ++i)
-	{
-		if (m_pollFds[i].revents & POLLIN)
+		// -1: wait indefinitely for an event on the monitored sockets.
+		if (poll(&m_pollFds[0], polledCount, -1) == -1)
 		{
-			if (m_pollFds[i].fd == m_listenFd)
-				std::cout << "Demande de connexion au socket d'ecoute" << std::endl;
+			Util::sendErrorMsg("Failed to poll sockets");
+			close(m_listenFd);
+			m_listenFd = -1;
+			return;
+		}
+
+		// Check revents for every monitored descriptor to identify which socket triggered which events.
+		// Then execute the appropriate code.
+		for (size_t i = 0; i < polledCount; ++i)
+		{
+			if (m_pollFds[i].revents & POLLIN)
+			{
+				// New TCP connection
+				if (m_pollFds[i].fd == m_listenFd)
+				{
+					int clientFd = accept(m_listenFd, NULL, NULL);
+					if (clientFd == -1)
+					{
+						// EAGAIN / EWOULDBLOCK: no connection available anymore.
+						if (errno != EAGAIN && errno != EWOULDBLOCK)
+							Util::sendErrorMsg("Failed to accept client");
+					}
+					else
+					{
+						// Set non blocking mode on client socket
+						if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1)
+						{
+							Util::sendErrorMsg("Failed to set client socket non blocking");
+							close(clientFd);
+						}
+						else
+						{
+							Client client;
+							client.fd = clientFd;
+							m_clients[clientFd] = client;
+
+							pollfd clientPoll = {};
+							clientPoll.fd = clientFd;
+							clientPoll.events = POLLIN; // Monitor incoming client data.
+							m_pollFds.push_back(clientPoll);
+						}
+					}
+				}
+				else // Client socket reception buffer ready to be read
+				{
+					int clientFd = m_pollFds[i].fd;
+					
+					char buffer[2048];
+					ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0); 
+					if (bytesRead > 0)
+					{
+						m_clients[clientFd].inputBuffer.append(buffer, bytesRead);
+						std::cout << m_clients[clientFd].inputBuffer << std::endl;
+					}
+					else if (bytesRead == 0)
+					{
+						// Client disconnected
+						// Close and remove it from the server.
+					}
+					else
+					{
+						// Handle receive failure without branching on errno (subject constraint)
+					}
+				}
+			}
 		}
 	}
 }
