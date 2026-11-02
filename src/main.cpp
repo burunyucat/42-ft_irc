@@ -1,16 +1,17 @@
 #include "Server.hpp"
+#include "Util.hpp"
 
 #include <cstdlib>
 #include <string>
 
 int main(int ac, char** av)
 {
-	(void)ac;
-	(void)av;
-
-	
-
-	int port(atoi(av[0]));
+	if (ac < 2)
+	{
+		Util::sendErrorMsg("Two arguments needed");
+		return 1;
+	}
+	int port(atoi(av[1]));
 	std::string password(av[2]);
 
 	Server srv(port, password);
