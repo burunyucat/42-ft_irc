@@ -11,7 +11,8 @@ SRC_FILES = main.cpp \
 	Util.cpp \
 	Server.cpp \
 	ServerConnections.cpp \
-	ServerReceive.cpp \
+	ServerClientIO.cpp \
+	ServerCommands.cpp \
 	Signal.cpp \
 
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))

@@ -1,11 +1,12 @@
 /**
- * @file ServerReceive.cpp
- * @brief Buffer received client data and extract complete IRC lines.
+ * @file ServerClientIO.cpp
+ * @brief Process received IRC lines and send buffered client output.
  */
 
 #include "Command.hpp"
 #include "Server.hpp"
 #include "Util.hpp"
+#include <sys/socket.h>
 
 
 void Server::processClientInput(Client& client, const char* buffer, size_t bytesRead)
@@ -33,4 +34,25 @@ void Server::processClientInput(Client& client, const char* buffer, size_t bytes
 			return;
 		}
 	}
+}
+
+bool Server::processClientOutput(Client& client)
+{
+	std::string& output = client.outputBuffer;
+	if (output.empty())
+		return true;
+
+	// client.fd: destination socket.
+	// output.c_str(): data to send.
+	// output.size(): maximum bytes to send; 0: no special send flags.
+	ssize_t bytesSent = send(client.fd, output.c_str(), output.size(), 0);
+	if (bytesSent <= 0)
+	{
+		Util::sendErrorMsg("Failed to send client data. Client will be disconnected.");
+		return false;
+	}
+
+	// Keep any data that could not be sent yet.
+	output.erase(0, bytesSent);
+	return true;
 }

@@ -36,6 +36,26 @@ Server::~Server()
 		close(m_listenFd);
 }
 
+void Server::updatePollEvents()
+{
+	// Monitor write readiness only when a client has pending output.
+	for (size_t i = 0; i < m_pollFds.size(); ++i)
+	{
+		if (m_pollFds[i].fd == m_listenFd)
+			continue;
+
+		std::map<int, Client>::const_iterator client = m_clients.find(m_pollFds[i].fd);
+
+		if (client == m_clients.end())
+			continue;
+
+		if (!client->second.outputBuffer.empty())
+			m_pollFds[i].events |= POLLOUT;
+		else
+			m_pollFds[i].events &= ~POLLOUT;
+	}
+}
+
 void Server::run()
 {
 	// Handle SIGINT and SIGTERM by requesting a clean shutdown.
@@ -107,6 +127,8 @@ void Server::run()
 
 	while (!Signal::stopRequested)
 	{
+		updatePollEvents();
+
 		// Only process sockets monitored by poll(); newly added clients wait for the next poll().
 		const size_t polledCount = m_pollFds.size();
 
@@ -150,7 +172,21 @@ void Server::run()
 							Util::sendErrorMsg("Failed to receive client data. Client will be disconnected.");
 						// Defer removal to avoid shifting descriptors during this loop.
 						disconnectedFds.push_back(clientFd);
+						continue;
 					}
+				}
+			}
+			if (m_pollFds[i].revents & POLLOUT)
+			{
+				int clientFd = m_pollFds[i].fd;
+				std::map<int, Client>::iterator client = m_clients.find(clientFd);
+				if (client == m_clients.end())
+					continue;
+
+				if (!processClientOutput(client->second))
+				{
+					disconnectedFds.push_back(clientFd);
+					continue;
 				}
 			}
 		}

@@ -27,5 +27,10 @@ bool Signal::installHandlers()
 		return false;
 	if (sigaction(SIGTERM, &action, NULL) == -1)
 		return false;
+
+	// Report failed sends instead of terminating on a closed connection.
+	action.sa_handler = SIG_IGN;
+	if (sigaction(SIGPIPE, &action, NULL) == -1)
+		return false;
 	return true;
 }

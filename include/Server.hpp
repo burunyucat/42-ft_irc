@@ -23,6 +23,9 @@ class Server
 		void run();
 
 	private:
+		/** @brief Update POLLOUT monitoring based on clients pending output. */
+		void updatePollEvents();
+
 		/** @brief Accept and register a new nonblocking client connection. */
 		void acceptClient();
 
@@ -33,6 +36,13 @@ class Server
 		 * @param[in] bytesRead Number of received bytes in buffer.
 		 */
 		void processClientInput(Client& client, const char* buffer, size_t bytesRead);
+
+		/**
+		 * @brief Send pending output and retain any unsent bytes.
+		 * @param[in,out] client Client whose output buffer is updated.
+		 * @return true if no data is pending or sending succeeds, false on failure.
+		 */
+		bool processClientOutput(Client& client);
 
 		/**
 		 * @brief Close a client socket and remove its server and channel records.
