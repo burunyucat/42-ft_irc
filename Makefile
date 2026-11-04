@@ -10,6 +10,7 @@ SRC_DIR = src
 SRC_FILES = main.cpp \
 	Util.cpp \
 	Server.cpp \
+	Signal.cpp \
 
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 

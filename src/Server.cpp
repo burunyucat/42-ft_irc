@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Signal.hpp"
 #include "Util.hpp"
 #include <algorithm>
 #include <cerrno>
@@ -77,6 +78,13 @@ void Server::disconnectClient(int fd)
 
 void Server::run()
 {
+	// Handle SIGINT and SIGTERM by requesting a clean shutdown.
+	if (!Signal::installHandlers())
+	{
+		Util::sendErrorMsg("Failed to install signal handlers");
+		return;
+	}
+
 	// Create the listener socket with TCP protocol
 	// AF_INET: IPv4
 	// SOCK_STREAM: connection-oriented byte stream
@@ -137,14 +145,18 @@ void Server::run()
 	listener.events = POLLIN; // Notify when a connection is ready to be accepted.
 	m_pollFds.push_back(listener);
 
-	while (true)
+	while (!Signal::stopRequested)
 	{
 		// Only process sockets monitored by poll(); newly added clients wait for the next poll().
 		const size_t polledCount = m_pollFds.size();
 
-		// -1: wait indefinitely for an event on the monitored sockets.
-		if (poll(&m_pollFds[0], polledCount, -1) == -1)
+		// A finite timeout also handles SIGINT received just before poll() starts.
+		if (poll(&m_pollFds[0], polledCount, 200) == -1)
 		{
+			if (Signal::stopRequested)
+				break;
+			if (errno == EINTR)
+				continue;
 			Util::sendErrorMsg("Failed to poll sockets");
 			close(m_listenFd);
 			m_listenFd = -1;
