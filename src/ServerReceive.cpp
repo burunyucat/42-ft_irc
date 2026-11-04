@@ -3,8 +3,9 @@
  * @brief Buffer received client data and extract complete IRC lines.
  */
 
+#include "Command.hpp"
 #include "Server.hpp"
-#include <iostream>
+#include "Util.hpp"
 
 
 void Server::processClientInput(Client& client, const char* buffer, size_t bytesRead)
@@ -20,7 +21,16 @@ void Server::processClientInput(Client& client, const char* buffer, size_t bytes
 		// Remove the complete line and keep any incomplete data.
 		client.inputBuffer.erase(0, pos + 2);
 
-		// TODO: parse the line, then execute it for this client.
-		std::cout << line << std::endl;
+		Command command;
+		if (!parseCommand(line, command))
+		{
+			Util::sendErrorMsg("Failed to parse command");
+			return;
+		}
+		if (!executeCommand(client, command))
+		{
+			Util::sendErrorMsg("Failed to execute command");
+			return;
+		}
 	}
 }

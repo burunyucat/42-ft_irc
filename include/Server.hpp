@@ -40,6 +40,22 @@ class Server
 		 */
 		void disconnectClient(int fd);
 
+		/**
+		 * @brief Parse an IRC line into a command.
+		 * @param[in] line IRC line without the trailing CRLF.
+		 * @param[out] newCommand Command populated from the parsed line.
+		 * @return true on success, false on failure.
+		 */
+		bool parseCommand(const std::string& line, Command& newCommand);
+
+		/**
+		 * @brief Execute the command sent by the client.
+		 * @param[in,out] client Client issuing the command.
+		 * @param[in] command Command to execute.
+		 * @return true on success, false on failure.
+		 */
+		bool executeCommand(Client& client, const Command& command);
+
 		/** @brief Handle the PASS command. */
 		void handlePass();
 		/** @brief Handle the NICK command. */
