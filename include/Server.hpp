@@ -17,6 +17,8 @@ class Server
 		void run();
 
 	private:
+		// Close a client socket and remove its server and channel records.
+		void disconnectClient(int fd);
 
 		// Handle PASS command
 		void handlePass();

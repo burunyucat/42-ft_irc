@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Util.hpp"
+#include <algorithm>
 #include <cerrno>
 #include <cstddef>
 #include <fcntl.h>
@@ -30,6 +31,48 @@ Server::~Server()
 
 	if (m_listenFd != -1)
 		close(m_listenFd);
+}
+
+void Server::disconnectClient(int fd)
+{
+	// Ignore unknown or already disconnected clients to avoid closing the same FD twice.
+	if (m_clients.find(fd) == m_clients.end())
+		return;
+
+	// Close the client socket and remove its client record and poll() entry.
+	close(fd);
+	m_clients.erase(fd);
+	for (std::vector<pollfd>::iterator it = m_pollFds.begin();
+			it != m_pollFds.end();
+			++it)
+	{
+		if (it->fd == fd)
+		{
+			m_pollFds.erase(it);
+			break;
+		}
+	}
+
+	// Remove the client's references from every channel and delete channels left empty.
+	for (std::map<std::string, Channel>::iterator it = m_channels.begin();
+		it != m_channels.end(); )
+	{
+		Channel& channel = it->second;
+
+		// remove() moves retained elements to the front and returns their new end, without resizing.
+		// erase() then deletes the remaining tail, actually removing the client's FD.
+		channel.members.erase(std::remove(channel.members.begin(), channel.members.end(), fd), channel.members.end());
+		channel.operators.erase(std::remove(channel.operators.begin(), channel.operators.end(), fd), channel.operators.end());
+		channel.invited.erase(std::remove(channel.invited.begin(), channel.invited.end(), fd), channel.invited.end());
+
+		// it++ passes the old iterator to erase() and advances it before that element is deleted.
+		// Otherwise, advance normally.
+		// Incrementing an erased iterator would be undefined behavior.
+		if (channel.members.empty())
+			m_channels.erase(it++);
+		else
+			++it;
+	}
 }
 
 void Server::run()
@@ -110,6 +153,7 @@ void Server::run()
 
 		// Check revents for every monitored descriptor to identify which socket triggered which events.
 		// Then execute the appropriate code.
+		std::vector<int> disconnectedFds;
 		for (size_t i = 0; i < polledCount; ++i)
 		{
 			if (m_pollFds[i].revents & POLLIN)
@@ -158,8 +202,8 @@ void Server::run()
 					}
 					else if (bytesRead == 0)
 					{
-						// Client disconnected
-						// Close and remove it from the server.
+						// Defer removal to avoid shifting descriptors during this loop.
+						disconnectedFds.push_back(clientFd);
 					}
 					else
 					{
@@ -168,5 +212,9 @@ void Server::run()
 				}
 			}
 		}
+
+		// Remove disconnected clients before the next poll().
+		for (size_t i = 0; i < disconnectedFds.size(); ++i)
+			disconnectClient(disconnectedFds[i]);
 	}
 }
