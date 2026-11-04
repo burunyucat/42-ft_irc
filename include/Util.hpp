@@ -1,3 +1,8 @@
+/**
+ * @file Util.hpp
+ * @brief Declare shared utilities and terminal color constants.
+ */
+
 #pragma once
 
 #include <string>

@@ -1,3 +1,8 @@
+/**
+ * @file main.cpp
+ * @brief Read command-line arguments and start the IRC server.
+ */
+
 #include "Server.hpp"
 #include "Util.hpp"
 

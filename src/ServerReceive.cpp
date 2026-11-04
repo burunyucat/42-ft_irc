@@ -1,5 +1,11 @@
+/**
+ * @file ServerReceive.cpp
+ * @brief Buffer received client data and extract complete IRC lines.
+ */
+
 #include "Server.hpp"
 #include <iostream>
+
 
 void Server::processClientInput(Client& client, const char* buffer, size_t bytesRead)
 {

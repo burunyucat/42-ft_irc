@@ -1,3 +1,8 @@
+/**
+ * @file Server.hpp
+ * @brief Declare the IRC server and its connection and command handling interface.
+ */
+
 #pragma once
 
 #include <string>
@@ -5,6 +10,7 @@
 #include <vector>
 #include <poll.h>
 #include "Client.hpp"
+#include "Command.hpp"
 #include "Channel.hpp"
 
 class Server
@@ -13,62 +19,70 @@ class Server
 		Server(int port, const std::string& password);
 		~Server();
 
-		// Main program
+		/** @brief Run the server's main event loop. */
 		void run();
 
 	private:
-		// Accept and register a new nonblocking client connection.
+		/** @brief Accept and register a new nonblocking client connection. */
 		void acceptClient();
 
-		// Append received data to the client's input buffer and extract complete IRC lines.
+		/**
+		 * @brief Append received data and extract complete IRC lines.
+		 * @param[in,out] client Client whose input buffer is updated.
+		 * @param[in] buffer Received data to append.
+		 * @param[in] bytesRead Number of received bytes in buffer.
+		 */
 		void processClientInput(Client& client, const char* buffer, size_t bytesRead);
 
-		// Close a client socket and remove its server and channel records.
+		/**
+		 * @brief Close a client socket and remove its server and channel records.
+		 * @param[in] fd Socket file descriptor of the client to disconnect.
+		 */
 		void disconnectClient(int fd);
 
-		// Handle PASS command
+		/** @brief Handle the PASS command. */
 		void handlePass();
-		// Handle NICK command
+		/** @brief Handle the NICK command. */
 		void handleNick();
-		// Handle USER command
+		/** @brief Handle the USER command. */
 		void handleUser();
-		// Handle JOIN command
+		/** @brief Handle the JOIN command. */
 		void handleJoin();
-		// Handle PRIVMSG command
+		/** @brief Handle the PRIVMSG command. */
 		void handlePrivmsg();
-		// Handle INVITE command
+		/** @brief Handle the INVITE command. */
 		void handleInvite();
-		// Handle MODE command
+		/** @brief Handle the MODE command. */
 		void handleMode();
-		// Handle KICK command
+		/** @brief Handle the KICK command. */
 		void handleKick();
-		// Handle TOPIC command
+		/** @brief Handle the TOPIC command. */
 		void handleTopic();
 
-		// Handle PART command
+		/** @brief Handle the PART command. */
 		void handlePart();
-		// Handle QUIT command
+		/** @brief Handle the QUIT command. */
 		void handleQuit();
-		// Handle PING command
+		/** @brief Handle the PING command. */
 		void handlePing();
-		// Handle PONG command
+		/** @brief Handle the PONG command. */
 		void handlePong();
-		// Handle NAMES command
+		/** @brief Handle the NAMES command. */
 		void handleNames();
 
-		// Listening socket fd
+		/** @brief Listening socket file descriptor. */
 		int m_listenFd;
 
-		// Listening port
+		/** @brief Listening port. */
 		int m_port;
-		// Password to access the server
+		/** @brief Password required to access the server. */
 		std::string m_password;
 
-		// Socket events monitored by poll
+		/** @brief Socket events monitored by poll. */
 		std::vector<struct pollfd> m_pollFds;
-		// Connected clients identified by FD
+		/** @brief Connected clients indexed by socket file descriptor. */
 		std::map<int, Client> m_clients;
 
-		// Channels identified by string keys
+		/** @brief Channels indexed by string keys. */
 		std::map<std::string, Channel> m_channels;
 };

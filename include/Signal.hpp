@@ -1,3 +1,8 @@
+/**
+ * @file Signal.hpp
+ * @brief Declare signal handlers and the server shutdown flag.
+ */
+
 #pragma once
 
 #include <csignal>

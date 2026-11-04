@@ -1,3 +1,8 @@
+/**
+ * @file Server.cpp
+ * @brief Manage server lifetime, listening socket setup, and the main event loop.
+ */
+
 #include "Server.hpp"
 #include "Signal.hpp"
 #include "Util.hpp"

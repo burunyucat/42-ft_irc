@@ -1,3 +1,8 @@
+/**
+ * @file Client.hpp
+ * @brief Define client identity, registration state, and network buffers.
+ */
+
 #pragma once
 
 #include <string>

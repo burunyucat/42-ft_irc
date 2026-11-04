@@ -1,3 +1,8 @@
+/**
+ * @file ServerConnections.cpp
+ * @brief Manage client connections, disconnections, and related channel cleanup.
+ */
+
 #include "Server.hpp"
 #include "Util.hpp"
 #include <algorithm>

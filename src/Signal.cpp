@@ -1,3 +1,8 @@
+/**
+ * @file Signal.cpp
+ * @brief Install and handle termination signals to request server shutdown.
+ */
+
 #include "Signal.hpp"
 #include <cstddef>
 #include <signal.h>

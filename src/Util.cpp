@@ -1,3 +1,8 @@
+/**
+ * @file Util.cpp
+ * @brief Implement shared whitespace and error-reporting utilities.
+ */
+
 #include "Util.hpp"
 #include <iostream>
 #include <string>
