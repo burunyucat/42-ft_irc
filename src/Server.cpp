@@ -207,19 +207,17 @@ void Server::run()
 					
 					char buffer[2048];
 					ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0); 
-					if (bytesRead > 0)
+					if (bytesRead > 0) // Data received: append it to the client's input buffer.
 					{
 						m_clients[clientFd].inputBuffer.append(buffer, bytesRead);
 						std::cout << m_clients[clientFd].inputBuffer << std::endl;
 					}
-					else if (bytesRead == 0)
+					else // Connection closed (0) or receive failure (-1): disconnect the client.
 					{
+						if (bytesRead == -1)
+							Util::sendErrorMsg("Failed to receive client data. Client will be disconnected.");
 						// Defer removal to avoid shifting descriptors during this loop.
 						disconnectedFds.push_back(clientFd);
-					}
-					else
-					{
-						// Handle receive failure without branching on errno (subject constraint)
 					}
 				}
 			}
