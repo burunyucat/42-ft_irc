@@ -17,6 +17,12 @@ class Server
 		void run();
 
 	private:
+		// Accept and register a new nonblocking client connection.
+		void acceptClient();
+
+		// Append received data to the client's input buffer and extract complete IRC lines.
+		void processClientInput(Client& client, const char* buffer, size_t bytesRead);
+
 		// Close a client socket and remove its server and channel records.
 		void disconnectClient(int fd);
 

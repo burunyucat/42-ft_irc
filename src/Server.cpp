@@ -76,6 +76,53 @@ void Server::disconnectClient(int fd)
 	}
 }
 
+void Server::processClientInput(Client& client, const char* buffer, size_t bytesRead)
+{
+	client.inputBuffer.append(buffer, bytesRead);
+
+	size_t pos;
+	while ((pos = client.inputBuffer.find("\r\n")) != std::string::npos)
+	{
+		// Extract the line without its delimiter.
+		std::string line = client.inputBuffer.substr(0, pos);
+
+		// Remove the complete line and keep any incomplete data.
+		client.inputBuffer.erase(0, pos + 2);
+
+		// TODO: parse the line, then execute it for this client.
+		std::cout << line << std::endl;
+	}
+}
+
+void Server::acceptClient()
+{
+	int clientFd = accept(m_listenFd, NULL, NULL);
+	if (clientFd == -1)
+	{
+		// EAGAIN / EWOULDBLOCK: no connection available anymore.
+		if (errno != EAGAIN && errno != EWOULDBLOCK)
+			Util::sendErrorMsg("Failed to accept client");
+		return;
+	}
+
+	// Set non blocking mode on client socket.
+	if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1)
+	{
+		Util::sendErrorMsg("Failed to set client socket non blocking");
+		close(clientFd);
+		return;
+	}
+
+	Client client;
+	client.fd = clientFd;
+	m_clients[clientFd] = client;
+
+	pollfd clientPoll = {};
+	clientPoll.fd = clientFd;
+	clientPoll.events = POLLIN; // Monitor incoming client data.
+	m_pollFds.push_back(clientPoll);
+}
+
 void Server::run()
 {
 	// Handle SIGINT and SIGTERM by requesting a clean shutdown.
@@ -170,36 +217,9 @@ void Server::run()
 		{
 			if (m_pollFds[i].revents & POLLIN)
 			{
-				// New TCP connection
-				if (m_pollFds[i].fd == m_listenFd)
+				if (m_pollFds[i].fd == m_listenFd) // New TCP connection requested
 				{
-					int clientFd = accept(m_listenFd, NULL, NULL);
-					if (clientFd == -1)
-					{
-						// EAGAIN / EWOULDBLOCK: no connection available anymore.
-						if (errno != EAGAIN && errno != EWOULDBLOCK)
-							Util::sendErrorMsg("Failed to accept client");
-					}
-					else
-					{
-						// Set non blocking mode on client socket
-						if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1)
-						{
-							Util::sendErrorMsg("Failed to set client socket non blocking");
-							close(clientFd);
-						}
-						else
-						{
-							Client client;
-							client.fd = clientFd;
-							m_clients[clientFd] = client;
-
-							pollfd clientPoll = {};
-							clientPoll.fd = clientFd;
-							clientPoll.events = POLLIN; // Monitor incoming client data.
-							m_pollFds.push_back(clientPoll);
-						}
-					}
+					acceptClient();
 				}
 				else // Client socket reception buffer ready to be read
 				{
@@ -207,10 +227,9 @@ void Server::run()
 					
 					char buffer[2048];
 					ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0); 
-					if (bytesRead > 0) // Data received: append it to the client's input buffer.
+					if (bytesRead > 0) // Data received
 					{
-						m_clients[clientFd].inputBuffer.append(buffer, bytesRead);
-						std::cout << m_clients[clientFd].inputBuffer << std::endl;
+						processClientInput(m_clients[clientFd], buffer, bytesRead);
 					}
 					else // Connection closed (0) or receive failure (-1): disconnect the client.
 					{
