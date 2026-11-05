@@ -8,7 +8,13 @@ INCLUDE = include
 
 SRC_DIR = src
 SRC_FILES = main.cpp \
+	Util.cpp \
 	Server.cpp \
+	ServerEvents.cpp \
+	ServerConnections.cpp \
+	ServerClientIO.cpp \
+	ServerCommands.cpp \
+	Signal.cpp \
 
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 

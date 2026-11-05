@@ -1,3 +1,8 @@
+/**
+ * @file Client.hpp
+ * @brief Define client identity, registration and disconnection state, and buffers.
+ */
+
 #pragma once
 
 #include <string>
@@ -18,9 +23,17 @@ struct Client
 	// IRC registration completed
 	bool registered;
 
+	// Request deferred disconnection after command execution.
+	bool disconnectRequested;
+	// Reason used in the IRC QUIT notification.
+	std::string quitReason;
+
+	// Received bytes awaiting processing.
 	std::string inputBuffer;
+	// Bytes awaiting transmission.
 	std::string outputBuffer;
 
 	// Default disconnected client
-	Client() : fd(-1), authenticated(false), registered(false) {}
+	Client() : fd(-1), authenticated(false), registered(false),
+		disconnectRequested(false), quitReason("Connection closed") {}
 };

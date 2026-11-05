@@ -1,3 +1,8 @@
+/**
+ * @file Channel.hpp
+ * @brief Define IRC channel state, modes, and membership.
+ */
+
 #pragma once
 
 #include <cstddef>
