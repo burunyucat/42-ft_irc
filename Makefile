@@ -10,6 +10,7 @@ SRC_DIR = src
 SRC_FILES = main.cpp \
 	Util.cpp \
 	Server.cpp \
+	ServerEvents.cpp \
 	ServerConnections.cpp \
 	ServerClientIO.cpp \
 	ServerCommands.cpp \

@@ -12,15 +12,11 @@
 #include <netinet/in.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 Server::Server(int port, const std::string& password)
 	// Initial server configuration
-	: m_listenFd(-1), m_port(port), m_password(password)
-{
-
-}
+	: m_listenFd(-1), m_port(port), m_password(password) {}
 
 Server::~Server()
 {
@@ -34,26 +30,6 @@ Server::~Server()
 
 	if (m_listenFd != -1)
 		close(m_listenFd);
-}
-
-void Server::updatePollEvents()
-{
-	// Monitor write readiness only when a client has pending output.
-	for (size_t i = 0; i < m_pollFds.size(); ++i)
-	{
-		if (m_pollFds[i].fd == m_listenFd)
-			continue;
-
-		std::map<int, Client>::const_iterator client = m_clients.find(m_pollFds[i].fd);
-
-		if (client == m_clients.end())
-			continue;
-
-		if (!client->second.outputBuffer.empty())
-			m_pollFds[i].events |= POLLOUT;
-		else
-			m_pollFds[i].events &= ~POLLOUT;
-	}
 }
 
 void Server::run()
@@ -123,7 +99,7 @@ void Server::run()
 
 	while (!Signal::stopRequested)
 	{
-		updatePollEvents();
+		updateClientPolloutFlags();
 
 		// Only process sockets monitored by poll(); newly added clients wait for the next poll().
 		const size_t polledCount = m_pollFds.size();
@@ -144,70 +120,15 @@ void Server::run()
 		std::vector<int> disconnectedFds;
 		for (size_t i = 0; i < polledCount; ++i)
 		{
-			// Listener socket
 			if (m_pollFds[i].fd == m_listenFd)
 			{
-				if (m_pollFds[i].revents & POLLHUP)
-				{
-					Util::sendErrorMsg("Listener socket hung up. Server will stop.");
+				if (!handleListenerEvents(m_pollFds[i].revents))
 					return;
-				}
-
-				if (m_pollFds[i].revents & POLLERR)
-				{
-					Util::sendErrorMsg("Listener socket failed. Server will stop.");
-					return;
-				}
-
-				if (m_pollFds[i].revents & POLLIN)
-					acceptClient();
-
-				continue;
 			}
-
-			// Client socket
-			
-			int clientFd = m_pollFds[i].fd;
-
-			if (m_pollFds[i].revents & POLLERR)
+			else if (!handleClientEvents(m_pollFds[i].fd, m_pollFds[i].revents))
 			{
-				Util::sendErrorMsg("Client socket failed. Client will be disconnected.");
-				disconnectedFds.push_back(clientFd);
-				continue;
-			}
-
-			// Drain remaining client data across iterations before disconnecting.
-			if (m_pollFds[i].revents & (POLLIN | POLLHUP))
-			{
-				char buffer[2048];
-				ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
-				if (bytesRead > 0) // Data received
-				{
-					processClientInput(m_clients[clientFd], buffer, bytesRead);
-				}
-				else // Connection closed (0) or receive failure (-1): disconnect the client.
-				{
-					if (bytesRead == -1)
-						Util::sendErrorMsg("Failed to receive client data. Client will be disconnected.");
-					// Defer removal to avoid shifting descriptors during this loop.
-					disconnectedFds.push_back(clientFd);
-					continue;
-				}
-			}
-
-			if (m_pollFds[i].revents & POLLOUT)
-			{
-				int clientFd = m_pollFds[i].fd;
-				std::map<int, Client>::iterator client = m_clients.find(clientFd);
-
-				if (client == m_clients.end())
-					continue;
-
-				if (!processClientOutput(client->second))
-				{
-					disconnectedFds.push_back(clientFd);
-					continue;
-				}
+				// Defer removal to avoid shifting descriptors during this loop.
+				disconnectedFds.push_back(m_pollFds[i].fd);
 			}
 		}
 

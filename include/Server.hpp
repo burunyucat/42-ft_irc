@@ -23,8 +23,23 @@ class Server
 		void run();
 
 	private:
-		/** @brief Update POLLOUT monitoring based on clients pending output. */
-		void updatePollEvents();
+		/** @brief Enable or disable client POLLOUT flags based on pending output. */
+		void updateClientPolloutFlags();
+
+		/**
+		 * @brief Handle events reported for the listening socket.
+		 * @param[in] revents Events reported by poll.
+		 * @return true to keep running, false to stop the server.
+		 */
+		bool handleListenerEvents(short revents);
+
+		/**
+		 * @brief Handle receive, send, and error events for a client socket.
+		 * @param[in] clientFd Client socket file descriptor.
+		 * @param[in] revents Events reported by poll.
+		 * @return true to keep the client, false to request deferred disconnection.
+		 */
+		bool handleClientEvents(int clientFd, short revents);
 
 		/** @brief Accept and register a new nonblocking client connection. */
 		void acceptClient();
