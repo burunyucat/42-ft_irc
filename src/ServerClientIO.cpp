@@ -11,6 +11,9 @@
 
 void Server::processClientInput(Client& client, const char* buffer, size_t bytesRead)
 {
+	if (client.disconnectRequested)
+		return;
+
 	client.inputBuffer.append(buffer, bytesRead);
 
 	size_t pos;
@@ -26,13 +29,15 @@ void Server::processClientInput(Client& client, const char* buffer, size_t bytes
 		if (!parseCommand(line, command))
 		{
 			Util::sendErrorMsg("Failed to parse command");
-			return;
+			continue;
 		}
 		if (!executeCommand(client, command))
 		{
 			Util::sendErrorMsg("Failed to execute command");
-			return;
 		}
+		// A disconnect request takes precedence over recoverable command errors.
+		if (client.disconnectRequested)
+			return;
 	}
 }
 

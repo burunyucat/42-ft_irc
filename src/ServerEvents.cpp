@@ -51,6 +51,13 @@ bool Server::handleListenerEvents(short revents)
 
 bool Server::handleClientEvents(int clientFd, short revents)
 {
+	std::map<int, Client>::iterator clientRegistryIt = m_clientRegistry.find(clientFd);
+	if (clientRegistryIt == m_clientRegistry.end())
+		return true;
+
+	if (clientRegistryIt->second.disconnectRequested)
+		return false;
+
 	if (revents & POLLERR)
 	{
 		Util::sendErrorMsg("Client socket failed. Client will be disconnected.");
@@ -64,7 +71,9 @@ bool Server::handleClientEvents(int clientFd, short revents)
 		ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
 		if (bytesRead > 0) // Data received
 		{
-			processClientInput(m_clientRegistry[clientFd], buffer, bytesRead);
+			processClientInput(clientRegistryIt->second, buffer, bytesRead);
+			if (clientRegistryIt->second.disconnectRequested)
+				return false;
 		}
 		else // Connection closed (0) or receive failure (-1): disconnect the client.
 		{
@@ -76,10 +85,6 @@ bool Server::handleClientEvents(int clientFd, short revents)
 
 	if (revents & POLLOUT)
 	{
-		std::map<int, Client>::iterator clientRegistryIt = m_clientRegistry.find(clientFd);
-		if (clientRegistryIt == m_clientRegistry.end())
-			return true;
-
 		if (!processClientOutput(clientRegistryIt->second))
 			return false;
 	}

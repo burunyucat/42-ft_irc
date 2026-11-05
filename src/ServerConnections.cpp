@@ -43,8 +43,12 @@ void Server::acceptClient()
 void Server::disconnectClient(int fd)
 {
 	// Ignore unknown or already disconnected clients to avoid closing the same FD twice.
-	if (m_clientRegistry.find(fd) == m_clientRegistry.end())
+	std::map<int, Client>::iterator clientRegistryIt = m_clientRegistry.find(fd);
+	if (clientRegistryIt == m_clientRegistry.end())
 		return;
+
+	// Notify IRC peers while the client identity and channel memberships are available.
+	notifyClientQuit(clientRegistryIt->second);
 
 	// Close the client socket and remove its client record and poll() entry.
 	close(fd);

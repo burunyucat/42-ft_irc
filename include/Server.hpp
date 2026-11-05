@@ -46,6 +46,7 @@ class Server
 
 		/**
 		 * @brief Append received data and extract complete IRC lines.
+		 * @details Stop processing commands when the client requests disconnection.
 		 * @param[in,out] client Client whose input buffer is updated.
 		 * @param[in] buffer Received data to append.
 		 * @param[in] bytesRead Number of received bytes in buffer.
@@ -60,10 +61,19 @@ class Server
 		bool processClientOutput(Client& client);
 
 		/**
-		 * @brief Close a client socket and remove its server and channel records.
+		 * @brief Notify peers, close a client socket, and remove its records.
 		 * @param[in] fd Socket file descriptor of the client to disconnect.
 		 */
 		void disconnectClient(int fd);
+
+		/**
+		 * @brief Queue an IRC QUIT notification for clients sharing a channel.
+		 * @param[in] client Departing client, still registered in clients and channels.
+		 * @details Append a CRLF-terminated message to each recipient's output buffer
+		 * once, excluding the departing client. Do not send directly or remove records.
+		 * Use client.quitReason as the notification reason.
+		 */
+		void notifyClientQuit(const Client& client);
 
 		/**
 		 * @brief Parse an IRC line into a command.
@@ -75,9 +85,11 @@ class Server
 
 		/**
 		 * @brief Execute the command sent by the client.
+		 * @details For QUIT, set client.disconnectRequested and client.quitReason.
+		 * Do not disconnect or notify directly; the TCP layer defers cleanup.
 		 * @param[in,out] client Client issuing the command.
 		 * @param[in] command Command to execute.
-		 * @return true on success, false on failure.
+		 * @return true on success, false on a recoverable command failure.
 		 */
 		bool executeCommand(Client& client, const Command& command);
 
