@@ -13,12 +13,11 @@ bool Server::parseCommand(const std::string& line, Command& newCommand)
 	return true;
 }
 
-bool Server::executeCommand(Client& client, const Command& command)
+void Server::executeCommand(Client& client, const Command& command)
 {
 	if (command.name == "QUIT")
 		handleQuit(client, command);
 	// TODO: dispatch the remaining commands to their handlers.
-	return true;
 }
 
 void Server::handleQuit(Client& client, const Command& command)

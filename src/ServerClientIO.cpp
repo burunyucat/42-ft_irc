@@ -31,11 +31,8 @@ void Server::processClientInput(Client& client, const char* buffer, size_t bytes
 			Util::sendErrorMsg("Failed to parse command");
 			continue;
 		}
-		if (!executeCommand(client, command))
-		{
-			Util::sendErrorMsg("Failed to execute command");
-		}
-		// A disconnect request takes precedence over recoverable command errors.
+		executeCommand(client, command);
+		// Stop processing further commands when the client requests disconnection.
 		if (client.disconnectRequested)
 			return;
 	}

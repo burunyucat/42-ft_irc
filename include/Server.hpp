@@ -87,11 +87,11 @@ class Server
 		 * @brief Execute the command sent by the client.
 		 * @details For QUIT, set client.disconnectRequested and client.quitReason.
 		 * Do not disconnect or notify directly; the TCP layer defers cleanup.
+		 * Handlers queue IRC errors in the client's output buffer when needed.
 		 * @param[in,out] client Client issuing the command.
 		 * @param[in] command Command to execute.
-		 * @return true on success, false on a recoverable command failure.
 		 */
-		bool executeCommand(Client& client, const Command& command);
+		void executeCommand(Client& client, const Command& command);
 
 		/** @brief Handle the PASS command. */
 		void handlePass();
