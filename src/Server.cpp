@@ -21,11 +21,11 @@ Server::Server(int port, const std::string& password)
 Server::~Server()
 {
 	// Close all connected client sockets; the map key is the socket descriptor.
-	for (std::map<int, Client>::iterator it = m_clients.begin();
-			it != m_clients.end();
-			++it)
+	for (std::map<int, Client>::iterator clientRegistryIt = m_clientRegistry.begin();
+			clientRegistryIt != m_clientRegistry.end();
+			++clientRegistryIt)
 	{
-		close(it->first);
+		close(clientRegistryIt->first);
 	}
 
 	if (m_listenFd != -1)

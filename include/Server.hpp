@@ -122,8 +122,8 @@ class Server
 		/** @brief Socket events monitored by poll. */
 		std::vector<struct pollfd> m_pollFds;
 		/** @brief Connected clients indexed by socket file descriptor. */
-		std::map<int, Client> m_clients;
+		std::map<int, Client> m_clientRegistry;
 
 		/** @brief Channels indexed by string keys. */
-		std::map<std::string, Channel> m_channels;
+		std::map<std::string, Channel> m_channelRegistry;
 };

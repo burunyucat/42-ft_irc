@@ -17,12 +17,12 @@ void Server::updateClientPolloutFlags()
 		if (m_pollFds[i].fd == m_listenFd)
 			continue;
 
-		std::map<int, Client>::const_iterator client = m_clients.find(m_pollFds[i].fd);
+		std::map<int, Client>::const_iterator clientRegistryIt = m_clientRegistry.find(m_pollFds[i].fd);
 
-		if (client == m_clients.end())
+		if (clientRegistryIt == m_clientRegistry.end())
 			continue;
 
-		if (!client->second.outputBuffer.empty())
+		if (!clientRegistryIt->second.outputBuffer.empty())
 			m_pollFds[i].events |= POLLOUT;
 		else
 			m_pollFds[i].events &= ~POLLOUT;
@@ -64,7 +64,7 @@ bool Server::handleClientEvents(int clientFd, short revents)
 		ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
 		if (bytesRead > 0) // Data received
 		{
-			processClientInput(m_clients[clientFd], buffer, bytesRead);
+			processClientInput(m_clientRegistry[clientFd], buffer, bytesRead);
 		}
 		else // Connection closed (0) or receive failure (-1): disconnect the client.
 		{
@@ -76,11 +76,11 @@ bool Server::handleClientEvents(int clientFd, short revents)
 
 	if (revents & POLLOUT)
 	{
-		std::map<int, Client>::iterator client = m_clients.find(clientFd);
-		if (client == m_clients.end())
+		std::map<int, Client>::iterator clientRegistryIt = m_clientRegistry.find(clientFd);
+		if (clientRegistryIt == m_clientRegistry.end())
 			return true;
 
-		if (!processClientOutput(client->second))
+		if (!processClientOutput(clientRegistryIt->second))
 			return false;
 	}
 

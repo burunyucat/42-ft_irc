@@ -32,7 +32,7 @@ void Server::acceptClient()
 
 	Client client;
 	client.fd = clientFd;
-	m_clients[clientFd] = client;
+	m_clientRegistry[clientFd] = client;
 
 	pollfd clientPoll = {};
 	clientPoll.fd = clientFd;
@@ -43,12 +43,12 @@ void Server::acceptClient()
 void Server::disconnectClient(int fd)
 {
 	// Ignore unknown or already disconnected clients to avoid closing the same FD twice.
-	if (m_clients.find(fd) == m_clients.end())
+	if (m_clientRegistry.find(fd) == m_clientRegistry.end())
 		return;
 
 	// Close the client socket and remove its client record and poll() entry.
 	close(fd);
-	m_clients.erase(fd);
+	m_clientRegistry.erase(fd);
 	for (std::vector<pollfd>::iterator it = m_pollFds.begin();
 			it != m_pollFds.end();
 			++it)
@@ -61,10 +61,10 @@ void Server::disconnectClient(int fd)
 	}
 
 	// Remove the client's references from every channel and delete channels left empty.
-	for (std::map<std::string, Channel>::iterator it = m_channels.begin();
-		it != m_channels.end(); )
+	for (std::map<std::string, Channel>::iterator channelRegistryIt = m_channelRegistry.begin();
+		channelRegistryIt != m_channelRegistry.end(); )
 	{
-		Channel& channel = it->second;
+		Channel& channel = channelRegistryIt->second;
 
 		// remove() moves retained elements to the front and returns their new end, without resizing.
 		// erase() then deletes the remaining tail, actually removing the client's FD.
@@ -72,12 +72,12 @@ void Server::disconnectClient(int fd)
 		channel.operators.erase(std::remove(channel.operators.begin(), channel.operators.end(), fd), channel.operators.end());
 		channel.invited.erase(std::remove(channel.invited.begin(), channel.invited.end(), fd), channel.invited.end());
 
-		// it++ passes the old iterator to erase() and advances it before that element is deleted.
+		// Post-increment passes the old iterator to erase() and advances it before deletion.
 		// Otherwise, advance normally.
 		// Incrementing an erased iterator would be undefined behavior.
 		if (channel.members.empty())
-			m_channels.erase(it++);
+			m_channelRegistry.erase(channelRegistryIt++);
 		else
-			++it;
+			++channelRegistryIt;
 	}
 }
