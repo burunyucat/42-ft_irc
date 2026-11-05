@@ -99,8 +99,6 @@ void Server::run()
 		sizeof(address)) == -1)
 	{
 		Util::sendErrorMsg("Failed to bind listener socket");
-		close(m_listenFd);
-		m_listenFd = -1;
 		return;
 	}
 
@@ -109,8 +107,6 @@ void Server::run()
 	if (listen(m_listenFd, SOMAXCONN) == -1)
 	{
 		Util::sendErrorMsg("Failed to listen on listener socket");
-		close(m_listenFd);
-		m_listenFd = -1;
 		return;
 	}
 
@@ -140,8 +136,6 @@ void Server::run()
 			if (errno == EINTR)
 				continue;
 			Util::sendErrorMsg("Failed to poll sockets");
-			close(m_listenFd);
-			m_listenFd = -1;
 			return;
 		}
 
@@ -150,36 +144,62 @@ void Server::run()
 		std::vector<int> disconnectedFds;
 		for (size_t i = 0; i < polledCount; ++i)
 		{
-			if (m_pollFds[i].revents & POLLIN)
+			// Listener socket
+			if (m_pollFds[i].fd == m_listenFd)
 			{
-				if (m_pollFds[i].fd == m_listenFd) // New TCP connection requested
+				if (m_pollFds[i].revents & POLLHUP)
 				{
-					acceptClient();
+					Util::sendErrorMsg("Listener socket hung up. Server will stop.");
+					return;
 				}
-				else // Client socket reception buffer ready to be read
+
+				if (m_pollFds[i].revents & POLLERR)
 				{
-					int clientFd = m_pollFds[i].fd;
-					
-					char buffer[2048];
-					ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0); 
-					if (bytesRead > 0) // Data received
-					{
-						processClientInput(m_clients[clientFd], buffer, bytesRead);
-					}
-					else // Connection closed (0) or receive failure (-1): disconnect the client.
-					{
-						if (bytesRead == -1)
-							Util::sendErrorMsg("Failed to receive client data. Client will be disconnected.");
-						// Defer removal to avoid shifting descriptors during this loop.
-						disconnectedFds.push_back(clientFd);
-						continue;
-					}
+					Util::sendErrorMsg("Listener socket failed. Server will stop.");
+					return;
+				}
+
+				if (m_pollFds[i].revents & POLLIN)
+					acceptClient();
+
+				continue;
+			}
+
+			// Client socket
+			
+			int clientFd = m_pollFds[i].fd;
+
+			if (m_pollFds[i].revents & POLLERR)
+			{
+				Util::sendErrorMsg("Client socket failed. Client will be disconnected.");
+				disconnectedFds.push_back(clientFd);
+				continue;
+			}
+
+			// Drain remaining client data across iterations before disconnecting.
+			if (m_pollFds[i].revents & (POLLIN | POLLHUP))
+			{
+				char buffer[2048];
+				ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
+				if (bytesRead > 0) // Data received
+				{
+					processClientInput(m_clients[clientFd], buffer, bytesRead);
+				}
+				else // Connection closed (0) or receive failure (-1): disconnect the client.
+				{
+					if (bytesRead == -1)
+						Util::sendErrorMsg("Failed to receive client data. Client will be disconnected.");
+					// Defer removal to avoid shifting descriptors during this loop.
+					disconnectedFds.push_back(clientFd);
+					continue;
 				}
 			}
+
 			if (m_pollFds[i].revents & POLLOUT)
 			{
 				int clientFd = m_pollFds[i].fd;
 				std::map<int, Client>::iterator client = m_clients.find(clientFd);
+
 				if (client == m_clients.end())
 					continue;
 
