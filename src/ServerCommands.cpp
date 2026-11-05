@@ -15,11 +15,17 @@ bool Server::parseCommand(const std::string& line, Command& newCommand)
 
 bool Server::executeCommand(Client& client, const Command& command)
 {
-	(void)client;
-	(void)command;
-	// TODO: dispatch the command to its handler.
-	// QUIT must set client.disconnectRequested and client.quitReason without notifying.
+	if (command.name == "QUIT")
+		handleQuit(client, command);
+	// TODO: dispatch the remaining commands to their handlers.
 	return true;
+}
+
+void Server::handleQuit(Client& client, const Command& command)
+{
+	if (!command.params.empty())
+		client.quitReason = command.params[0];
+	client.disconnectRequested = true;
 }
 
 void Server::notifyClientQuit(const Client& client)

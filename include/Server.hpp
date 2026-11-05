@@ -115,7 +115,7 @@ class Server
 		/** @brief Handle the PART command. */
 		void handlePart();
 		/** @brief Handle the QUIT command. */
-		void handleQuit();
+		void handleQuit(Client& client, const Command& command);
 		/** @brief Handle the PING command. */
 		void handlePing();
 		/** @brief Handle the PONG command. */
