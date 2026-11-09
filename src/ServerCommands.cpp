@@ -4,12 +4,54 @@
  */
 
 #include "Server.hpp"
+#include <cctype>
 
 bool Server::parseCommand(const std::string& line, Command& newCommand)
 {
-	(void)line;
-	(void)newCommand;
-	// TODO: parse the IRC line and populate newCommand.
+	size_t	pos = line.find_first_not_of(" ", 0);
+	if (pos == line.npos)
+		return false;
+	if (line[pos] == ':')
+	{
+		pos = line.find(" ", pos);
+		if (pos == line.npos)
+			return false;
+		pos = line.find_first_not_of(" ", pos);
+		if (pos == line.npos)
+			return false;
+	}
+	size_t	end = line.find(" ", pos);
+	if (end != line.npos)
+	{
+		newCommand.name = line.substr(pos, end - pos);
+		for (size_t i = 0; i < newCommand.name.size(); i++)
+			newCommand.name[i] = std::toupper(static_cast<unsigned char>(newCommand.name[i]));
+	}
+	else
+	{
+		newCommand.name = line.substr(pos);
+		for (size_t i = 0; i < newCommand.name.size(); i++)
+			newCommand.name[i] = std::toupper(static_cast<unsigned char>(newCommand.name[i]));
+		return true;
+	}
+	pos = end;
+	while (pos != line.npos)
+	{
+		pos = line.find_first_not_of(" ", pos);
+		if (pos == line.npos)
+			break;
+		if (line[pos] == ':')
+		{
+			newCommand.params.push_back(line.substr(pos + 1));
+			return true;
+		}
+		end = line.find(" ", pos);
+		if (end != line.npos)
+			newCommand.params.push_back(line.substr(pos, end - pos));
+		else
+			newCommand.params.push_back(line.substr(pos));
+		pos = end;
+	}
 	return true;
 }
 
