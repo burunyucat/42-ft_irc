@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include <poll.h>
+#include <set>
 #include "Client.hpp"
 #include "Command.hpp"
 #include "Channel.hpp"
@@ -92,36 +93,40 @@ class Server
 		 * @param[in] command Command to execute.
 		 */
 		void executeCommand(Client& client, const Command& command);
+		/**
+		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
+		 */
+		void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
 
 		/** @brief Handle the PASS command. */
-		void handlePass();
+		void handlePass(Client& client, const Command& command);
 		/** @brief Handle the NICK command. */
-		void handleNick();
+		void handleNick(Client& client, const Command& command);
 		/** @brief Handle the USER command. */
-		void handleUser();
+		void handleUser(Client& client, const Command& command);
 		/** @brief Handle the JOIN command. */
-		void handleJoin();
+		void handleJoin(Client& client, const Command& command);
 		/** @brief Handle the PRIVMSG command. */
-		void handlePrivmsg();
+		void handlePrivmsg(Client& client, const Command& command);
 		/** @brief Handle the INVITE command. */
-		void handleInvite();
+		void handleInvite(Client& client, const Command& command);
 		/** @brief Handle the MODE command. */
-		void handleMode();
+		void handleMode(Client& client, const Command& command);
 		/** @brief Handle the KICK command. */
-		void handleKick();
+		void handleKick(Client& client, const Command& command);
 		/** @brief Handle the TOPIC command. */
-		void handleTopic();
+		void handleTopic(Client& client, const Command& command);
 
 		/** @brief Handle the PART command. */
-		void handlePart();
+		void handlePart(Client& client, const Command& command);
 		/** @brief Handle the QUIT command. */
 		void handleQuit(Client& client, const Command& command);
 		/** @brief Handle the PING command. */
-		void handlePing();
+		void handlePing(Client& client, const Command& command);
 		/** @brief Handle the PONG command. */
-		void handlePong();
+		void handlePong(Client& client, const Command& command);
 		/** @brief Handle the NAMES command. */
-		void handleNames();
+		void handleNames(Client& client, const Command& command);
 
 		/** @brief Listening socket file descriptor. */
 		int m_listenFd;
@@ -138,4 +143,11 @@ class Server
 
 		/** @brief Channels indexed by string keys. */
 		std::map<std::string, Channel> m_channelRegistry;
+
+		/** @brief Commands indexed by a map container along with a typedef for ease of access. */
+		typedef	void (Server::*Handler)(Client&, const Command&);
+		std::map<std::string, Handler> m_commandHandler;
+
+		/** @brief Allowed commands in case the user is not registered. */
+		std::set<std::string> m_authorizedHandler;
 };

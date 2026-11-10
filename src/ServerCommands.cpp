@@ -10,7 +10,7 @@ bool Server::parseCommand(const std::string& line, Command& newCommand)
 {
 	size_t	pos = line.find_first_not_of(" ", 0);
 	if (pos == line.npos)
-		return false;
+		return true;
 	if (line[pos] == ':')
 	{
 		pos = line.find(" ", pos);
@@ -55,20 +55,28 @@ bool Server::parseCommand(const std::string& line, Command& newCommand)
 	return true;
 }
 
+void Server::sendNumericAnswer(Client &client, const std::string &num, const std::string &message)
+{
+	std::string out = ":ircserv " + num + " ";
+	if (!client.nickname.empty())
+		out = out + client.nickname + " ";
+	else
+		out = out + "*" + " ";
+	out += message + "\r\n";
+	client.outputBuffer.append(out);
+}
+
 void Server::executeCommand(Client& client, const Command& command)
 {
-	if (command.name == "QUIT")
-		handleQuit(client, command);
+	if (command.name.empty())
+		return ;
+	std::map<std::string, Handler>::iterator it = this->m_commandHandler.find(command.name);
+	if (it == this->m_commandHandler.end())
+		this->sendNumericAnswer(client, "421", command.name + " :Unknown command");
+	else if (client.registered == false && !this->m_authorizedHandler.count(command.name))
+		this->sendNumericAnswer(client, "451", ":You have not registered");
 	else
-	{
-		std::string message = ":ircserv 421 ";
-		if (!client.nickname.empty())
-			message = message + client.nickname + " ";
-		else
-			message = message + "*" + " ";
-		message += command.name + " :Unknown command\r\n";
-		client.outputBuffer.append(message);
-	}
+		(this->*it->second)(client, command);
 }
 
 void Server::handleQuit(Client& client, const Command& command)

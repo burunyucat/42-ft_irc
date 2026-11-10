@@ -15,8 +15,21 @@ SRC_FILES = main.cpp \
 	ServerClientIO.cpp \
 	ServerCommands.cpp \
 	Signal.cpp \
+	command/PASS.cpp \
+	command/NICK.cpp \
+	command/USER.cpp \
+	command/JOIN.cpp \
+	command/PRIVMSG.cpp \
+	command/INVITE.cpp \
+	command/MODE.cpp \
+	command/KICK.cpp \
+	command/TOPIC.cpp \
+	command/PART.cpp \
+	command/PING.cpp \
+	command/PONG.cpp \
+	command/NAMES.cpp \
 
-SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
+SRC =$(addprefix $(SRC_DIR)/, $(SRC_FILES))
 
 OBJ_DIR = obj
 OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC))
