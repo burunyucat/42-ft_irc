@@ -32,6 +32,8 @@ void Server::processClientInput(Client& client, const char* buffer, size_t bytes
 			continue;
 		}
 		executeCommand(client, command);
+		if (command.name.empty())
+			continue;
 		// Stop processing further commands when the client requests disconnection.
 		if (client.disconnectRequested)
 			return;

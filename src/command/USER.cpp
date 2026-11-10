@@ -1,6 +1,7 @@
 #include "Server.hpp"
 
-void Server::handleUser(void)
+void Server::handleUser(Client& client, const Command& command)
 {
-	m_clients[m_listenFd].username = command.params[0];
+	(void)client;
+	(void)command;
 }

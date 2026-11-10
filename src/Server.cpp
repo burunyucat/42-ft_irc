@@ -16,7 +16,29 @@
 
 Server::Server(int port, const std::string& password)
 	// Initial server configuration
-	: m_listenFd(-1), m_port(port), m_password(password) {}
+	: m_listenFd(-1), m_port(port), m_password(password)
+	// Handler map creation for the commands
+	{
+		m_commandHandler["PASS"] = &Server::handlePass;
+		m_commandHandler["NICK"] = &Server::handleNick;
+		m_commandHandler["USER"] = &Server::handleUser;
+		m_commandHandler["JOIN"] = &Server::handleJoin;
+		m_commandHandler["PRIVMSG"] = &Server::handlePrivmsg;
+		m_commandHandler["INVITE"] = &Server::handleInvite;
+		m_commandHandler["MODE"] = &Server::handleMode;
+		m_commandHandler["KICK"] = &Server::handleKick;
+		m_commandHandler["TOPIC"] = &Server::handleTopic;
+		m_commandHandler["PART"] = &Server::handlePart;
+		m_commandHandler["QUIT"] = &Server::handleQuit;
+		m_commandHandler["PING"] = &Server::handlePing;
+		m_commandHandler["PONG"] = &Server::handlePong;
+		m_commandHandler["NAMES"] = &Server::handleNames;
+		m_authorizedHandler.insert("PASS");
+		m_authorizedHandler.insert("NICK");
+		m_authorizedHandler.insert("USER");
+		m_authorizedHandler.insert("PING");
+		m_authorizedHandler.insert("QUIT");
+	}
 
 Server::~Server()
 {
