@@ -59,7 +59,16 @@ void Server::executeCommand(Client& client, const Command& command)
 {
 	if (command.name == "QUIT")
 		handleQuit(client, command);
-	// TODO: dispatch the remaining commands to their handlers.
+	else
+	{
+		std::string message = ":ircserv 421 ";
+		if (!client.nickname.empty())
+			message = message + client.nickname + " ";
+		else
+			message = message + "*" + " ";
+		message += command.name + " :Unknown command\r\n";
+		client.outputBuffer.append(message);
+	}
 }
 
 void Server::handleQuit(Client& client, const Command& command)
