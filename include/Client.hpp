@@ -26,7 +26,7 @@ struct Client
 	// Request deferred disconnection after command execution.
 	bool disconnectRequested;
 	// Reason used in the IRC QUIT notification.
-	std::string quitReason;
+	std::string 	quitReason;
 
 	// Received bytes awaiting processing.
 	std::string inputBuffer;
