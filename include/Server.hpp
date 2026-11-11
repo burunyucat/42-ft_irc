@@ -97,6 +97,10 @@ class Server
 		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
 		 */
 		void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
+		/**
+		 * @brief A function to check the if the user is registered.
+		*/
+		void tryCompleteRegistration(Client &client);
 
 		/** @brief Handle the PASS command. */
 		void handlePass(Client& client, const Command& command);
