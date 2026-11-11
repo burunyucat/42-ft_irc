@@ -8,12 +8,13 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <cstdlib>
 #include <poll.h>
+#include <algorithm>
 #include <set>
 #include "Client.hpp"
 #include "Command.hpp"
 #include "Channel.hpp"
-
 class Server
 {
 	public:
@@ -97,6 +98,8 @@ class Server
 		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
 		 */
 		void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
+		template<typename T>
+		bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command);
 		/**
 		 * @brief A function to check the if the user is registered.
 		*/
@@ -145,7 +148,7 @@ class Server
 		/** @brief Connected clients indexed by socket file descriptor. */
 		std::map<int, Client> m_clientRegistry;
 
-		/** @brief Channels indexed by string keys. */
+		/** @brief Channels indexed by string names. */
 		std::map<std::string, Channel> m_channelRegistry;
 
 		/** @brief Commands indexed by a map container along with a typedef for ease of access. */
