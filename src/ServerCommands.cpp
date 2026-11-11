@@ -66,6 +66,28 @@ void Server::sendNumericAnswer(Client &client, const std::string &num, const std
 	client.outputBuffer.append(out);
 }
 
+void Server::tryCompleteRegistration(Client& client)
+{
+	if (client.registered == true)
+		return;
+	else if (!client.nickname.empty() && !client.username.empty() && client.authenticated == true)
+	{
+		client.registered = true;
+		this->sendNumericAnswer(client, "001", ":Welcome to the Internet Relay Network!");
+		return;
+	}
+	else
+	{
+		this->sendNumericAnswer(client, "451", ":You have not registered");
+	}
+	/* Option B for the execution, we check idependently and send a specialized return on the cause of rejection.
+	else
+	{
+		this->sendNumericAnswer(client, "464", ":Password incorrect");
+	}
+	*/
+}
+
 void Server::executeCommand(Client& client, const Command& command)
 {
 	if (command.name.empty())
