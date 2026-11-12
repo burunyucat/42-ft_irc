@@ -9,7 +9,7 @@ void Server::handlePass(Client& client, const Command& command)
 	}
 	if (command.params.empty())
 	{
-		sendNumericAnswer(client, "461", ":Not enough parameters");
+		sendNumericAnswer(client, "461", command.name + " :Not enough parameters");
 		return;
 	}
 	if (command.params[0] == this->m_password)
