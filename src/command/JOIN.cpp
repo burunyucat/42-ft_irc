@@ -17,12 +17,11 @@ static void parseParamsJoin(const std::string &toExtract, std::vector<std::strin
 		index++;
 		oldPlaceOfComma = placeOfComma;
 	} while (index <= nbOfComma);
-	
-	
 }
 void Server::handleJoin(Client& client, const Command& command)
 {
 	std::vector<std::string> channel;
+	Channel * ptrchannel;
 	std::vector<std::string> keyOfChannel;
 	std::vector<int>::iterator membersIt;
 	if(command.params.size()>0)
@@ -41,6 +40,21 @@ void Server::handleJoin(Client& client, const Command& command)
 			parseParamsJoin(command.params[0], channel);//option 1 is one or multiple channels
 			if(command.params.size()>1) //option 2 is one or multiple key
 				parseParamsJoin(command.params[1], keyOfChannel);
+			for (size_t i = 0; i < channel.size(); i++)
+			{
+				ptrchannel = findChannel(channel[i]);
+				if(ptrchannel)
+				{
+					if(!ptrchannel->key.empty())
+					{
+						if(command.params.size()>1 && keyOfChannel.size()>=i && keyOfChannel[i] ==ptrchannel->key)
+							addMember(client.fd, *ptrchannel);
+					}
+					else
+						addMember(client.fd, *ptrchannel);
+				}
+			}
+			
 			//Test for parsing JOIN
 			// for (size_t i = 0; i < channel.size(); i++)
 			// 	std::cout << "channel "<< i <<channel[i] <<std::endl;

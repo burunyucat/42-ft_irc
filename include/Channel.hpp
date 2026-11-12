@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <map>
 
 struct Channel
 {
@@ -36,10 +37,10 @@ struct Channel
 	Channel() : inviteOnly(false), topicRestricted(false), memberLimit(0) {}
 };
 
-
 	/**
 	 * Functions for consulting the data in the Channel struct.
 	 */
+	bool existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry);
 	bool	isMember(int fd, const Channel& channel);
 	bool	isOperator(int fd, const Channel& channel);
 	bool	isInvited(int fd, const Channel& channel);

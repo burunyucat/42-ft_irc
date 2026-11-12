@@ -5,7 +5,15 @@
 
 #include "Channel.hpp"
 
-
+bool existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry)
+{
+	std::map<std::string, Channel>::iterator channelRegistryIt;
+	channelRegistryIt = std::find(m_channelRegistry.begin(), m_channelRegistry.end(), name);
+	if(channelRegistryIt != m_channelRegistry.end())
+		return true;
+	else
+		return false;
+}
 bool isMember(int fd, const Channel& channel)
 {
 	return std::find(channel.members.begin(), channel.members.end(), fd) != channel.members.end();
