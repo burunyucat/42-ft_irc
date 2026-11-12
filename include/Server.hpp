@@ -107,6 +107,20 @@ class Server
 		*/
 		bool isNicknameInUse(const std::string &nick, int exceptFd);
 
+		/**
+		 * @brief Send a message to another user by adding \r\n at the end of it and adding it to the outputBuffer
+		 */
+		void rawMessage(Client &client, const std::string &message);
+		/**
+		 * @brief Function to return the constructed nick!user@localhost handle
+		 */
+		std::string fullName(const Client &client) const;
+		/**
+		 * @brief Broadcast function to send messages
+		 */
+		void broadcast(const Channel &channel, const std::string &message, int exceptFd);
+
+		Channel *findChannel(const std::string &name);
 
 		/** @brief Handle the PASS command. */
 		void handlePass(Client& client, const Command& command);

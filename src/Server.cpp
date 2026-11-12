@@ -6,6 +6,7 @@
 #include "Server.hpp"
 #include "Signal.hpp"
 #include "Util.hpp"
+#include "Channel.hpp"
 #include <cerrno>
 #include <cstddef>
 #include <fcntl.h>
@@ -13,6 +14,7 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
 
 Server::Server(int port, const std::string& password)
 	// Initial server configuration
@@ -162,7 +164,7 @@ void Server::run()
 
 bool Server::isNicknameInUse(const std::string &nick, int exceptFd)
 {
-	std::string	tested;
+	std::string	tested = nick;
 	for (size_t j = 0; j < nick.length(); j++)
 		tested[j] = tolower(nick[j]);
 	for (std::map<int, Client>::iterator it = this->m_clientRegistry.begin(); it != this->m_clientRegistry.end(); ++it)
@@ -176,4 +178,39 @@ bool Server::isNicknameInUse(const std::string &nick, int exceptFd)
 			return true;
 	}
 	return false;
+}
+
+void Server::rawMessage(Client &client, const std::string &message)
+{
+	if (message.empty())
+		return;
+	std::string out = message + "\r\n";
+	client.outputBuffer.append(out);
+}
+
+std::string Server::fullName(const Client &client) const
+{
+	std::string out = ":" + client.nickname + "!" + client.username + "@localhost";
+	return out;
+}
+
+void Server::broadcast(const Channel &channel, const std::string &message, int exceptFd)
+{
+	for (size_t i = 0; i < channel.members.size(); i++)
+	{
+		if (channel.members[i] == exceptFd)
+			continue;
+		std::map<int, Client>::iterator it = this->m_clientRegistry.find(channel.members[i]);
+		if (it == this->m_clientRegistry.end())
+			continue;
+		rawMessage(it->second, message);
+	}
+}
+
+Channel *Server::findChannel(const std::string &name)
+{
+	std::map<std::string, Channel>::iterator it = this->m_channelRegistry.find(name);
+	if (it == m_channelRegistry.end())
+		return NULL;
+	return &it->second;
 }
