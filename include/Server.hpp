@@ -98,13 +98,12 @@ class Server
 		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
 		 */
 		void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
-		template<typename T>
-		bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command);
+
 		/**
 		 * @brief A function to check the if the user is registered.
-		*/
+		 */
 		void tryCompleteRegistration(Client &client);
-
+		
 		/** @brief Handle the PASS command. */
 		void handlePass(Client& client, const Command& command);
 		/** @brief Handle the NICK command. */
@@ -119,6 +118,9 @@ class Server
 		void handleInvite(Client& client, const Command& command);
 		/** @brief Handle the MODE command. */
 		void handleMode(Client& client, const Command& command);
+		template<typename T>
+		bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command);
+		void handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign);
 		/** @brief Handle the KICK command. */
 		void handleKick(Client& client, const Command& command);
 		/** @brief Handle the TOPIC command. */

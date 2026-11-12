@@ -1,7 +1,50 @@
 #include "Server.hpp"
 
+void Server::handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign)
+{
+	int a = 1;
+	const int n = 1;
+	int clientfd = -1;
+	std::vector<int>::iterator membersIt;
+	if(!Server::makeActionDependingOfNbParameter(a, n, client, command))
+	return ;
+	for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt != m_clientRegistry.end(); ClientIt++)
+	{
+		if(ClientIt->second.nickname != command.params[2])
+		{
+			clientfd = ClientIt->second.fd;
+			break;
+		}
+	}
+	membersIt= std::find (channel.members.begin(), channel.members.end(), clientfd);
+	if (clientfd != -1 && membersIt != channel.members.end())// && etc
+	{
+		std::vector<int>::iterator operatorIt = std::find(channel.operators.begin(), channel.operators.end(), clientfd);
+		//Find Client
+		if(sign == true)
+		{
+			if(operatorIt== channel.operators.end())
+				channel.operators.push_back(clientfd);
+		}
+		else
+		{
+			if(operatorIt != channel.operators.end())
+				channel.operators.erase(operatorIt); //Make reply if i erase operator of client
+		}
+	}
+	else
+	{
+		// Not find Client
+		if(clientfd == -1)
+			Server::sendNumericAnswer(client, "401" , command.params[2] + " :Pas de nick/channel de ce genre");//ERR_NOSUCHNICK
+		else
+			Server::sendNumericAnswer(client, "441" ,command.params[2] +  " " + channel.name + " :They aren't on that channel");//ERR_USERNOTINCHANNEL
+	}
+}
+
+
 template <typename T>
-bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
+bool Server::makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
 {
 	if(command.params.size()>2)
 	{
@@ -46,35 +89,7 @@ void Server::handleMode(Client& client, const Command& command)
 		else if(command.params[1][1] == 't')
 			channel.topicRestricted = sign;
 		else if(command.params[1][1] == 'o')
-		{
-			const int n =1;
-			if(!Server::makeActionDependingOfNbParameter(1, n, client, command))
-				return ;
-			for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt->second.nickname != command.params[2]; ClientIt++)
-			{
-				if
-			}
-			
-			std::vector<int>::iterator membersIt = std::find(channel.members.begin(), channel.members.end(), command.params[2]);
-			std::vector<int>::iterator operatorIt;
-			if (membersIt != channel.members.end())// && etc
-			{
-				//Find
-				if(sign == true)
-				{
-
-					channel.operators.push_back(*membersIt);
-				}
-				else
-				{
-					channel.operators.erase(membersIt);
-				}
-			}
-			else
-			{
-				// Not find
-			}
-		}
+			Server::handleModeOptionO(client, command, channel, sign);
 		else if(command.params[1][1] == 'l')
 		{
 			if(sign == true)
