@@ -4,6 +4,7 @@
  */
 
 #include "Util.hpp"
+#include "Server.hpp"
 #include <iostream>
 #include <string>
 
@@ -17,3 +18,5 @@ void Util::sendErrorMsg(const std::string& msg)
 {
 	std::cerr << BG_RED << "ERROR:" << RESET << B_RED << " " << msg << RESET << std::endl;
 }
+
+

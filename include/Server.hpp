@@ -102,6 +102,12 @@ class Server
 		*/
 		void tryCompleteRegistration(Client &client);
 
+		/**
+		 * @brief Determines if a nickname exists in the IRC and is in use.
+		*/
+		bool isNicknameInUse(const std::string &nick, int exceptFd);
+
+
 		/** @brief Handle the PASS command. */
 		void handlePass(Client& client, const Command& command);
 		/** @brief Handle the NICK command. */

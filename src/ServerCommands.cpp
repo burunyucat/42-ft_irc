@@ -70,16 +70,21 @@ void Server::tryCompleteRegistration(Client& client)
 {
 	if (client.registered == true)
 		return;
-	else if (!client.nickname.empty() && !client.username.empty() && client.authenticated == true)
+	else if (!client.nickname.empty() && !client.username.empty() && client.authenticated == false)
 	{
-		client.registered = true;
-		this->sendNumericAnswer(client, "001", ":Welcome to the Internet Relay Network!");
+		this->sendNumericAnswer(client, "464", ":Password incorrect");
+		client.quitReason = "Bad password";
+		client.disconnectRequested = true;
 		return;
 	}
-	else
-	{
-		this->sendNumericAnswer(client, "451", ":You have not registered");
-	}
+	else if (client.nickname.empty() || client.username.empty())
+		return;
+	client.registered = true;
+	/* For the 001, instead of localhost, we may change that by tracking the current host through the client structure*/
+	this->sendNumericAnswer(client, "001", ":Welcome to the Internet Relay Network " + client.nickname + "!" + client.username + "@localhost");
+	this->sendNumericAnswer(client, "002", ":Your host is ircserv, running version 1.0");
+	this->sendNumericAnswer(client, "003", ":This server was created " + static_cast<std::string>(__DATE__));
+	this->sendNumericAnswer(client, "004", "ircserv 1.0 o itkol");
 	/* Option B for the execution, we check idependently and send a specialized return on the cause of rejection.
 	else
 	{
