@@ -1,9 +1,50 @@
 #include "Server.hpp"
 
+void Server::handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign)
+{
+	int a = 1;
+	const int n = 1;
+	int clientfd = -1;
+	std::vector<int>::iterator membersIt;
+	if(!Server::makeActionDependingOfNbParameter(a, n, client, command))
+	return ;
+	for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt != m_clientRegistry.end(); ClientIt++)
+	{
+		if(ClientIt->second.nickname != command.params[2])
+		{
+			clientfd = ClientIt->second.fd;
+			break;
+		}
+	}
+	membersIt= std::find (channel.members.begin(), channel.members.end(), clientfd);
+	if (clientfd != -1 && membersIt != channel.members.end())// && etc
+	{
+		std::vector<int>::iterator operatorIt = std::find(channel.operators.begin(), channel.operators.end(), clientfd);
+		//Find Client
+		if(sign == true)
+		{
+			if(operatorIt== channel.operators.end())
+				channel.operators.push_back(clientfd);
+		}
+		else
+		{
+			if(operatorIt != channel.operators.end())
+				channel.operators.erase(operatorIt); //Make reply if i erase operator of client
+		}
+	}
+	else
+	{
+		// Not find Client
+		if(clientfd == -1)
+			Server::sendNumericAnswer(client, "401" , command.params[2] + " :Pas de nick/channel de ce genre");//ERR_NOSUCHNICK
+		else
+			Server::sendNumericAnswer(client, "441" ,command.params[2] +  " " + channel.name + " :They aren't on that channel");//ERR_USERNOTINCHANNEL
+	}
+}
 
 
 template <typename T>
-static bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
+bool Server::makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
 {
 	if(command.params.size()>2)
 	{
@@ -41,59 +82,20 @@ void Server::handleMode(Client& client, const Command& command)
 		else if(command.params[1][1] == 'k')
 		{
 			if(sign == true)
-				makeActionDependingOfNbParameter(channel.key, command.params[2], client, command);
+				Server::makeActionDependingOfNbParameter(channel.key, command.params[2], client, command);
 			else
 				channel.key="";
 		}
 		else if(command.params[1][1] == 't')
 			channel.topicRestricted = sign;
 		else if(command.params[1][1] == 'o')
-		{
-			int a = 1;
-			const int n = 1;
-			int clientfd = -1;
-			std::vector<int>::iterator membersIt;
-			if(!makeActionDependingOfNbParameter(a, n, client, command))
-				return ;
-			for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt != m_clientRegistry.end(); ClientIt++)
-			{
-				if(ClientIt->second.nickname != command.params[2])
-				{
-					clientfd = ClientIt->second.fd;
-					break;
-				}
-			}
-			membersIt= std::find (channel.members.begin(), channel.members.end(), clientfd);
-			if (clientfd != -1 && membersIt != channel.members.end())
-			{
-				std::vector<int>::iterator operatorIt = std::find(channel.operators.begin(), channel.operators.end(), clientfd);
-				//Find Client
-				if(sign == true)
-				{
-					if(operatorIt== channel.operators.end())
-						channel.operators.push_back(clientfd);
-				}
-				else
-				{
-					if(operatorIt != channel.operators.end())
-						channel.operators.erase(operatorIt); //Make reply if i erase operator of client
-				}
-			}
-			else
-			{
-				// Not find Client
-				if(clientfd == -1)
-					Server::sendNumericAnswer(client, "401" , command.params[2] + " :Pas de nick/channel de ce genre");//ERR_NOSUCHNICK
-				else
-					Server::sendNumericAnswer(client, "441" ,command.params[2] +  " " + channel.name + " :They aren't on that channel");//ERR_USERNOTINCHANNEL
-			}
-		}
+			Server::handleModeOptionO(client, command, channel, sign);
 		else if(command.params[1][1] == 'l')
 		{
 			if(sign == true)
 			{
 				int convert =std::atoi(command.params[2].c_str());
-				makeActionDependingOfNbParameter(channel.memberLimit, static_cast<std::size_t>(convert), client, command);
+				Server::makeActionDependingOfNbParameter(channel.memberLimit, static_cast<std::size_t>(convert), client, command);
 			}
 			else
 				channel.memberLimit = 0;
