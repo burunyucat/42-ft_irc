@@ -118,9 +118,6 @@ class Server
 		void handleInvite(Client& client, const Command& command);
 		/** @brief Handle the MODE command. */
 		void handleMode(Client& client, const Command& command);
-		template<typename T>
-		bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command);
-		void handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign);
 		/** @brief Handle the KICK command. */
 		void handleKick(Client& client, const Command& command);
 		/** @brief Handle the TOPIC command. */
