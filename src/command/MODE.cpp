@@ -47,8 +47,14 @@ void Server::handleMode(Client& client, const Command& command)
 			channel.topicRestricted = sign;
 		else if(command.params[1][1] == 'o')
 		{
-			if(!Server::makeActionDependingOfNbParameter(1, 1, client, command))
+			const int n =1;
+			if(!Server::makeActionDependingOfNbParameter(1, n, client, command))
 				return ;
+			for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt->second.nickname != command.params[2]; ClientIt++)
+			{
+				if
+			}
+			
 			std::vector<int>::iterator membersIt = std::find(channel.members.begin(), channel.members.end(), command.params[2]);
 			std::vector<int>::iterator operatorIt;
 			if (membersIt != channel.members.end())// && etc
