@@ -101,7 +101,7 @@ void Server::handleMode(Client& client, const Command& command)
 				channel.memberLimit = 0;
 		}
 		else
-			Server::sendNumericAnswer(client, "472" , ":is unknown mode char to me for " + channel.name);//ERR_UNKNOWNMODE
+			Server::sendNumericAnswer(client, "472" , command.params[0] + " :is unknown mode char to me for " + channel.name);//ERR_UNKNOWNMODE
 	}
 	else
 		Server::sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS

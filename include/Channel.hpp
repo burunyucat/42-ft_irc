@@ -35,6 +35,8 @@ struct Channel
 
 	// Default unrestricted channel
 	Channel() : inviteOnly(false), topicRestricted(false), memberLimit(0) {}
+	// Default unrestricted channel with name
+	Channel(std::string Name) : name(Name), inviteOnly(false), topicRestricted(false), memberLimit(0) {}
 };
 
 	/**
