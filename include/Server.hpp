@@ -23,6 +23,11 @@ class Server
 
 		/** @brief Run the server's main event loop. */
 		void run();
+		
+		/**
+		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
+		 */
+		static void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
 
 	private:
 		/** @brief Enable or disable client POLLOUT flags based on pending output. */
@@ -94,10 +99,6 @@ class Server
 		 * @param[in] command Command to execute.
 		 */
 		void executeCommand(Client& client, const Command& command);
-		/**
-		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
-		 */
-		void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
 
 		/**
 		 * @brief A function to check the if the user is registered.
@@ -132,21 +133,17 @@ class Server
 		void handleUser(Client& client, const Command& command);
 		/** @brief Handle the JOIN command. */
 		void handleJoin(Client& client, const Command& command);
-		void Server::checkAddMembers(Channel &channel, const Command& command, Client& client);
 		/** @brief Handle the PRIVMSG command. */
 		void handlePrivmsg(Client& client, const Command& command);
 		/** @brief Handle the INVITE command. */
 		void handleInvite(Client& client, const Command& command);
 		/** @brief Handle the MODE command. */
 		void handleMode(Client& client, const Command& command);
-		template<typename T>
-		bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command);
 		void handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign);
 		/** @brief Handle the KICK command. */
 		void handleKick(Client& client, const Command& command);
 		/** @brief Handle the TOPIC command. */
 		void handleTopic(Client& client, const Command& command);
-
 		/** @brief Handle the PART command. */
 		void handlePart(Client& client, const Command& command);
 		/** @brief Handle the QUIT command. */

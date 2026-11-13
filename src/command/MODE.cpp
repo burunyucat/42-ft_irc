@@ -6,7 +6,7 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 	const int n = 1;
 	int clientfd = -1;
 	std::vector<int>::iterator membersIt;
-	if(!Server::makeActionDependingOfNbParameter(a, n, client, command))
+	if(!makeActionDependingOfNbParameter(a, n, client, command))
 	return ;
 	for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt != m_clientRegistry.end(); ClientIt++)
 	{
@@ -44,7 +44,7 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 
 
 template <typename T>
-bool Server::makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
+static bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
 {
 	if(command.params.size()>2)
 	{

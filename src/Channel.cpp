@@ -4,6 +4,7 @@
  */
 
 #include "Channel.hpp"
+#include "Server.hpp"
 
 bool existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry)
 {
@@ -29,11 +30,22 @@ bool	isInvited(int fd, const Channel& channel)
 	return std::find(channel.invited.begin(), channel.invited.end(), fd) != channel.invited.end();
 }
 
-void	addMember(int fd, Channel &channel)
+void	addMember(Client &client, Channel &channel)
 {
-	std::vector<int>::iterator it = std::find(channel.members.begin(), channel.members.end(), fd);
+	std::vector<int>::iterator it = std::find(channel.members.begin(), channel.members.end(), client.fd);
 	if (it == channel.members.end())
-		channel.members.push_back(fd);
+	{
+		std::string allNameOnChannel;
+		channel.members.push_back(client.fd);
+		if(!channel.topic.empty())
+			Server::sendNumericAnswer(client, "332", channel.name + " :"+channel.topic);//RPL_TOPIC
+		else
+			Server::sendNumericAnswer(client, "331", channel.name + " :No topic is set");//RPL_NOTOPIC
+		for (std::vector<int>::iterator it = channel.members.begin(); it != channel.members.end(); it++)
+			allNameOnChannel+=*it+" ";
+		Server::sendNumericAnswer(client, "353",  "= " + channel.name +" :"+ allNameOnChannel);//RPL_NAMREPLY
+		Server::sendNumericAnswer(client, "366", channel.name + " :End of NAMES list");//RPL_ENDOFNAMES
+	}
 }
 
 void	removeMember(int fd, Channel &channel)

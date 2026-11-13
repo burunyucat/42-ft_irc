@@ -2,14 +2,14 @@
 #include "Channel.hpp"
 // #include <iostream>
 
-void Server::checkAddMembers(Channel &channel, const Command& command, Client& client)
+static void checkAddMembers(Channel &channel, const Command& command, Client& client)
 {
 	if(channel.memberLimit!=0 && (channel.members.size() + 1) >= channel.memberLimit)
 		Server::sendNumericAnswer(client, "471" , channel.name + " :Cannot join channel (+l)");//ERR_CHANNELISFULL
 	else if(channel.inviteOnly)
 		Server::sendNumericAnswer(client, "473" , channel.name + " :Cannot join channel (+i)");//ERR_INVITEONLYCHAN
 	else
-		addMember(client.fd, channel);
+		addMember(client, channel);
 }
 static bool isPrefix(char prefix)
 {
@@ -83,9 +83,11 @@ void Server::handleJoin(Client& client, const Command& command)
 				{
 					if(parseNamesChannel(channel[i]))
 					{//Create channel
+						Channel newchannel(channel[i]) ;
 						std::map<std::string, Channel>::iterator channelIt;
 						channelIt = m_channelRegistry.lower_bound(channel[i]);
-						m_channelRegistry.insert(channelIt, std::pair<std::string, Channel>(channel[i], Channel(channel[i])));
+						m_channelRegistry.insert(channelIt, std::pair<std::string, Channel>(channel[i], newchannel));
+						addMember(client, newchannel);
 					}
 					else
 						Server::sendNumericAnswer(client, "476" ,  channel[i] + " :Bad Channel Mask");//ERR_BADCHANMASK
