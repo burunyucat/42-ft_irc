@@ -132,6 +132,7 @@ class Server
 		void handleUser(Client& client, const Command& command);
 		/** @brief Handle the JOIN command. */
 		void handleJoin(Client& client, const Command& command);
+		void Server::checkAddMembers(Channel &channel, const Command& command, Client& client);
 		/** @brief Handle the PRIVMSG command. */
 		void handlePrivmsg(Client& client, const Command& command);
 		/** @brief Handle the INVITE command. */
