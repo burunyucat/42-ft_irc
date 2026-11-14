@@ -6,6 +6,23 @@
 #include "Channel.hpp"
 #include "Server.hpp"
 
+void splitComma(const std::string &toExtract, std::vector<std::string> &str)
+{
+	int nbOfComma;
+	int index=0;
+	size_t placeOfComma= 0;
+	size_t oldPlaceOfComma =-1;
+	nbOfComma = std::count (toExtract.begin(), toExtract.end(), ',');
+	do
+	{
+		placeOfComma = toExtract.find(',', placeOfComma);
+		str.push_back(toExtract.substr(oldPlaceOfComma+1, placeOfComma));
+		index++;
+		oldPlaceOfComma = placeOfComma;
+	} while (index <= nbOfComma);
+}
+
+
 bool existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry)
 {
 	std::map<std::string, Channel>::iterator channelRegistryIt;

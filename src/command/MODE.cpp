@@ -82,7 +82,7 @@ void Server::handleMode(Client& client, const Command& command)
 		else if(command.params[1][1] == 'k')
 		{
 			if(sign == true)
-				Server::makeActionDependingOfNbParameter(channel.key, command.params[2], client, command);
+				makeActionDependingOfNbParameter(channel.key, command.params[2], client, command);
 			else
 				channel.key="";
 		}
@@ -95,7 +95,7 @@ void Server::handleMode(Client& client, const Command& command)
 			if(sign == true)
 			{
 				int convert =std::atoi(command.params[2].c_str());
-				Server::makeActionDependingOfNbParameter(channel.memberLimit, static_cast<std::size_t>(convert), client, command);
+				makeActionDependingOfNbParameter(channel.memberLimit, static_cast<std::size_t>(convert), client, command);
 			}
 			else
 				channel.memberLimit = 0;
