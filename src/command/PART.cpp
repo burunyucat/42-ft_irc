@@ -2,15 +2,7 @@
 
 
 
-static void notifyAllClientOnTheChannel(Client &client, Channel & channel, std::map<int, Client> &m_clientRegistry, const std::string & msg)
-{
-	std::map<int, Client>::iterator findIt;
-	for (std::vector<int>::iterator it = channel.members.begin(); it != channel.members.end(); it++)
-	{
-		findIt = m_clientRegistry.find(*it);
-		Server::sendNumericAnswer(findIt->second, "", msg);
-	}
-}
+
 
 void Server::handlePart(Client& client, const Command& command)
 {
