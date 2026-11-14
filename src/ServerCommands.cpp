@@ -57,7 +57,11 @@ bool Server::parseCommand(const std::string& line, Command& newCommand)
 
 void Server::sendNumericAnswer(Client &client, const std::string &num, const std::string &message)
 {
-	std::string out = ":ircserv " + num + " ";
+	std::string out;
+	if(num.empty())
+		out = ":ircserv";
+	else
+		out = ":ircserv " + num + " ";
 	if (!client.nickname.empty())
 		out = out + client.nickname + " ";
 	else

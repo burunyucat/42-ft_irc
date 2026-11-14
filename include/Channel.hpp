@@ -39,6 +39,10 @@ struct Channel
 	Channel(std::string Name) : name(Name), inviteOnly(false), topicRestricted(false), memberLimit(0), topic("") {}
 };
 
+	//Functions for separate the params between the comma
+	void splitComma(const std::string &toExtract, std::vector<std::string> &str);
+
+
 	/**
 	 * Functions for consulting the data in the Channel struct.
 	 */
