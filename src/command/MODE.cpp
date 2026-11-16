@@ -20,7 +20,7 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 	{
 		// Not find Client
 		if(!clientTarget)
-			Server::sendNumericAnswer(client, "401" , command.params[2] + " :Pas de nick/channel de ce genre");//ERR_NOSUCHNICK
+			Server::sendNumericAnswer(client, "401" , command.params[2] + " :No such nick/channel");//ERR_NOSUCHNICK
 		else
 			Server::sendNumericAnswer(client, "441" ,command.params[2] +  " " + channel.name + " :They aren't on that channel");//ERR_USERNOTINCHANNEL
 	}
