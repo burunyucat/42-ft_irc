@@ -214,3 +214,13 @@ Channel *Server::findChannel(const std::string &name)
 		return NULL;
 	return &it->second;
 }
+
+Client *Server::findClient(const std::string &nickname)
+{
+	for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt != m_clientRegistry.end(); ClientIt++)
+	{
+		if(ClientIt->second.nickname != nickname)
+			return &ClientIt->second;
+	}
+	return NULL;
+}

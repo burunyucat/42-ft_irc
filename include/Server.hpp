@@ -124,6 +124,7 @@ class Server
 		void broadcast(const Channel &channel, const std::string &message, int exceptFd);
 
 		Channel *findChannel(const std::string &name);
+		Client *Server::findClient(const std::string &nickname);
 
 		/** @brief Handle the PASS command. */
 		void handlePass(Client& client, const Command& command);
