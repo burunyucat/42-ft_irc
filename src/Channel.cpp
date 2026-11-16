@@ -47,11 +47,12 @@ bool	isInvited(int fd, const Channel& channel)
 	return std::find(channel.invited.begin(), channel.invited.end(), fd) != channel.invited.end();
 }
 
-void	addMember(Client &client, Channel &channel)
+void	addMember(Client &client, Channel &channel, std::map<int, Client> &m_clientRegistry)
 {
 	std::vector<int>::iterator it = std::find(channel.members.begin(), channel.members.end(), client.fd);
 	if (it == channel.members.end())
 	{
+		notifyAllClientOnTheChannel(channel, m_clientRegistry, client.nickname + " JOIN " + channel.name);
 		std::string allNameOnChannel;
 		channel.members.push_back(client.fd);
 		if(!channel.topic.empty())
@@ -101,7 +102,7 @@ void	addInvited(int fd, Channel &channel)
 }
 
 
-void notifyAllClientOnTheChannel(Client &client, Channel & channel, std::map<int, Client> &m_clientRegistry, const std::string & msg)
+void notifyAllClientOnTheChannel(Channel & channel, std::map<int, Client> &m_clientRegistry, const std::string & msg)
 {
 	std::map<int, Client>::iterator findIt;
 	for (std::vector<int>::iterator it = channel.members.begin(); it != channel.members.end(); it++)

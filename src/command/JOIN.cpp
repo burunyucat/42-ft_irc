@@ -2,14 +2,14 @@
 #include "Channel.hpp"
 // #include <iostream>
 
-static void checkAddMembers(Channel &channel, const Command& command, Client& client)
+static void checkAddMembers(Channel &channel, const Command& command, Client& client, std::map<int, Client> &m_clientRegistry)
 {
 	if(channel.memberLimit!=0 && (channel.members.size() + 1) >= channel.memberLimit)
 		Server::sendNumericAnswer(client, "471" , channel.name + " :Cannot join channel (+l)");//ERR_CHANNELISFULL
 	else if(channel.inviteOnly)
 		Server::sendNumericAnswer(client, "473" , channel.name + " :Cannot join channel (+i)");//ERR_INVITEONLYCHAN
 	else
-		addMember(client, channel);
+		addMember(client, channel, m_clientRegistry);
 }
 static bool isPrefix(char prefix)
 {
@@ -55,12 +55,12 @@ void Server::handleJoin(Client& client, const Command& command)
 					if(!ptrchannel->key.empty())
 					{
 						if(command.params.size()>1 && keyOfChannel.size()>=i && keyOfChannel[i] ==ptrchannel->key)
-							checkAddMembers(*ptrchannel, command, client);
+							checkAddMembers(*ptrchannel, command, client, m_clientRegistry);
 						else
 							Server::sendNumericAnswer(client, "475" , channel[i] + " :Cannot join channel (+k)");//ERR_BADCHANNELKEY
 					}
 					else
-						checkAddMembers(*ptrchannel, command, client);
+						checkAddMembers(*ptrchannel, command, client, m_clientRegistry);
 				}
 				else
 				{
@@ -70,13 +70,12 @@ void Server::handleJoin(Client& client, const Command& command)
 						std::map<std::string, Channel>::iterator channelIt;
 						channelIt = m_channelRegistry.lower_bound(channel[i]);
 						m_channelRegistry.insert(channelIt, std::pair<std::string, Channel>(channel[i], newchannel));
-						addMember(client, newchannel);
+						addMember(client, newchannel, m_clientRegistry);
 					}
 					else
 						Server::sendNumericAnswer(client, "476" ,  channel[i] + " :Bad Channel Mask");//ERR_BADCHANMASK
 				}
 			}
-			
 			//Test for parsing JOIN
 			// for (size_t i = 0; i < channel.size(); i++)
 			// 	std::cout << "channel "<< i <<channel[i] <<std::endl;

@@ -19,9 +19,9 @@ void Server::handlePart(Client& client, const Command& command)
 				if(isMember(client.fd, channel[i]))
 				{
 					if(command.params.size()>1)
-						notifyAllClientOnTheChannel(client, *ptrChannel, this->m_clientRegistry, "PART " +ptrChannel->name + " :" + command.params[1]);
+						notifyAllClientOnTheChannel(*ptrChannel, this->m_clientRegistry, "PART " +ptrChannel->name + " :" + command.params[1]);
 					else
-						notifyAllClientOnTheChannel(client, *ptrChannel, this->m_clientRegistry, "PART " +ptrChannel->name);
+						notifyAllClientOnTheChannel(*ptrChannel, this->m_clientRegistry, "PART " +ptrChannel->name);
 					removeMember(client.fd, *ptrChannel);
 				}
 				else
