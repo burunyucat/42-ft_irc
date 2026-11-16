@@ -22,7 +22,6 @@ void splitComma(const std::string &toExtract, std::vector<std::string> &str)
 	} while (index <= nbOfComma);
 }
 
-
 bool existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry)
 {
 	std::map<std::string, Channel>::iterator channelRegistryIt;

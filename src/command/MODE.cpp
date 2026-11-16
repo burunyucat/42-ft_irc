@@ -4,38 +4,22 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 {
 	int a = 1;
 	const int n = 1;
-	int clientfd = -1;
-	std::vector<int>::iterator membersIt;
+	Client *clientTarget;
 	if(!makeActionDependingOfNbParameter(a, n, client, command))
 		return ;
-	for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt != m_clientRegistry.end(); ClientIt++)
+	clientTarget = findClient(command.params[2]);
+	if (clientTarget && isMember(clientTarget->fd, channel))
 	{
-		if(ClientIt->second.nickname != command.params[2])
-		{
-			clientfd = ClientIt->second.fd;
-			break;
-		}
-	}
-	membersIt= std::find (channel.members.begin(), channel.members.end(), clientfd);
-	if (clientfd != -1 && membersIt != channel.members.end())// && etc
-	{
-		std::vector<int>::iterator operatorIt = std::find(channel.operators.begin(), channel.operators.end(), clientfd);
 		//Find Client
 		if(sign == true)
-		{
-			if(operatorIt== channel.operators.end())
-				channel.operators.push_back(clientfd);
-		}
+			addOperator(clientTarget->fd, channel);
 		else
-		{
-			if(operatorIt != channel.operators.end())
-				channel.operators.erase(operatorIt); //Make reply if i erase operator of client
-		}
+			removeOperator(clientTarget->fd, channel);
 	}
 	else
 	{
 		// Not find Client
-		if(clientfd == -1)
+		if(!clientTarget)
 			Server::sendNumericAnswer(client, "401" , command.params[2] + " :Pas de nick/channel de ce genre");//ERR_NOSUCHNICK
 		else
 			Server::sendNumericAnswer(client, "441" ,command.params[2] +  " " + channel.name + " :They aren't on that channel");//ERR_USERNOTINCHANNEL
@@ -62,7 +46,6 @@ void Server::handleMode(Client& client, const Command& command)
 	bool sign;
 	Channel channel;
 	std::map<std::string, Channel>::iterator channelRegistryIt;
-	(void)client;
 	if(command.params.size() > 1 && command.params[1].size()==2 && (command.params[1][0] =='-' || command.params[1][0] =='+'))
 	{
 		channelRegistryIt = m_channelRegistry.find(command.params[0]);
@@ -82,7 +65,12 @@ void Server::handleMode(Client& client, const Command& command)
 		else if(command.params[1][1] == 'k')
 		{
 			if(sign == true)
-				makeActionDependingOfNbParameter(channel.key, command.params[2], client, command);
+			{
+				if(channel.key.empty())
+					makeActionDependingOfNbParameter(channel.key, command.params[2], client, command);
+				else
+					Server::sendNumericAnswer(client, "467" , channel.name + " :Channel key already set");//ERR_KEYSET
+			}
 			else
 				channel.key="";
 		}
