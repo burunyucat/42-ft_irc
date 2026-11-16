@@ -26,6 +26,7 @@ Server::Server(int port, const std::string& password)
 		m_commandHandler["USER"] = &Server::handleUser;
 		m_commandHandler["JOIN"] = &Server::handleJoin;
 		m_commandHandler["PRIVMSG"] = &Server::handlePrivmsg;
+		m_commandHandler["NOTICE"] = &Server::handleNotice;
 		m_commandHandler["INVITE"] = &Server::handleInvite;
 		m_commandHandler["MODE"] = &Server::handleMode;
 		m_commandHandler["KICK"] = &Server::handleKick;

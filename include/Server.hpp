@@ -101,7 +101,6 @@ class Server
 		 * @brief A function to check the if the user is registered.
 		*/
 		void tryCompleteRegistration(Client &client);
-
 		/**
 		 * @brief Determines if a nickname exists in the IRC and is in use.
 		*/
@@ -126,6 +125,10 @@ class Server
 		 * @brief Broadcast function to send messages
 		 */
 		void broadcast(const Channel &channel, const std::string &message, int exceptFd);
+		/**
+		 * @brief Function to send messages to peers in a channel
+		 */
+		void notifyPeers(const Client &client, const std::string &message);
 
 		Channel *findChannel(const std::string &name);
 
@@ -139,6 +142,8 @@ class Server
 		void handleJoin(Client& client, const Command& command);
 		/** @brief Handle the PRIVMSG command. */
 		void handlePrivmsg(Client& client, const Command& command);
+		/** @brief Handle the NOTICE command. */
+		void handleNotice(Client& client, const Command& command);
 		/** @brief Handle the INVITE command. */
 		void handleInvite(Client& client, const Command& command);
 		/** @brief Handle the MODE command. */
@@ -147,7 +152,6 @@ class Server
 		void handleKick(Client& client, const Command& command);
 		/** @brief Handle the TOPIC command. */
 		void handleTopic(Client& client, const Command& command);
-
 		/** @brief Handle the PART command. */
 		void handlePart(Client& client, const Command& command);
 		/** @brief Handle the QUIT command. */
