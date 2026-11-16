@@ -107,6 +107,6 @@ void notifyAllClientOnTheChannel(Channel & channel, std::map<int, Client> &m_cli
 	for (std::vector<int>::iterator it = channel.members.begin(); it != channel.members.end(); it++)
 	{
 		findIt = m_clientRegistry.find(*it);
-		Server::sendNumericAnswer(findIt->second, "", msg);
+		Server::sendNumericAnswer(findIt->second, "", msg);//notification
 	}
 }

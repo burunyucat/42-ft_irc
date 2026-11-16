@@ -6,7 +6,7 @@ static void checkAddMembers(Channel &channel, const Command& command, Client& cl
 {
 	if(channel.memberLimit!=0 && (channel.members.size() + 1) >= channel.memberLimit)
 		Server::sendNumericAnswer(client, "471" , channel.name + " :Cannot join channel (+l)");//ERR_CHANNELISFULL
-	else if(channel.inviteOnly)
+	else if(channel.inviteOnly && !isInvited(client.fd, channel))
 		Server::sendNumericAnswer(client, "473" , channel.name + " :Cannot join channel (+i)");//ERR_INVITEONLYCHAN
 	else
 		addMember(client, channel, m_clientRegistry);
