@@ -29,6 +29,8 @@ SRC_FILES = main.cpp \
 	command/PING.cpp \
 	command/PONG.cpp \
 	command/NAMES.cpp \
+	command/NOTICE.cpp \
+	command/QUIT.cpp
 
 SRC =$(addprefix $(SRC_DIR)/, $(SRC_FILES))
 

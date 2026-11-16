@@ -46,5 +46,6 @@ void Server::handleNick(Client& client, const Command& command)
 		std::string out = fullName(client) + " NICK " + command.params[0];
 		client.nickname = command.params[0];
 		rawMessage(client, out);
+		notifyPeers(client, out);
 	}
 }

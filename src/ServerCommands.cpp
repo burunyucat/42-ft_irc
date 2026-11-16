@@ -106,16 +106,23 @@ void Server::executeCommand(Client& client, const Command& command)
 		(this->*it->second)(client, command);
 }
 
-void Server::handleQuit(Client& client, const Command& command)
+void Server::notifyPeers(const Client &client, const std::string &message)
 {
-	if (!command.params.empty())
-		client.quitReason = command.params[0];
-	client.disconnectRequested = true;
-}
-
-void Server::notifyClientQuit(const Client& client)
-{
-	(void)client;
-	// TODO: queue QUIT once per shared-channel peer, excluding the departing client.
-	// Use client.quitReason; client identity and channel memberships are still available.
+	std::set<int> peers_fd;
+	for(std::map<std::string, Channel>::iterator it = this->m_channelRegistry.begin(); it != this->m_channelRegistry.end(); ++it)
+	{
+		if (isMember(client.fd, it->second))
+		{
+			for (size_t i = 0; i < it->second.members.size(); i++)
+				peers_fd.insert(it->second.members[i]);
+		}
+	}
+	peers_fd.erase(client.fd);
+	for (std::set<int>::iterator j = peers_fd.begin(); j != peers_fd.end(); ++j)
+	{
+		std::map<int, Client>::iterator it_2 = this->m_clientRegistry.find(*j);
+		if (it_2 == this->m_clientRegistry.end())
+			continue;
+		rawMessage(it_2->second, message);
+	}
 }
