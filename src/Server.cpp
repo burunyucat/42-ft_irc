@@ -180,6 +180,22 @@ bool Server::isNicknameInUse(const std::string &nick, int exceptFd)
 	return false;
 }
 
+Client *Server::findClientByNick(const std::string &nick)
+{
+	std::string	tested = nick;
+	for (size_t j = 0; j < nick.length(); j++)
+		tested[j] = tolower(nick[j]);
+	for (std::map<int, Client>::iterator it = this->m_clientRegistry.begin(); it != this->m_clientRegistry.end(); ++it)
+	{
+		std::string registered = it->second.nickname;
+		for (size_t i = 0; i < it->second.nickname.length(); i++)
+			registered[i] = tolower(it->second.nickname[i]);
+		if (tested == registered)
+			return &it->second;
+	}
+	return NULL;
+}
+
 void Server::rawMessage(Client &client, const std::string &message)
 {
 	if (message.empty())

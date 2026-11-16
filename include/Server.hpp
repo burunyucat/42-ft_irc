@@ -106,6 +106,13 @@ class Server
 		 * @brief Determines if a nickname exists in the IRC and is in use.
 		*/
 		bool isNicknameInUse(const std::string &nick, int exceptFd);
+		/**
+		 * @brief Find a connected client by nickname (case-insensitive).
+		 * @return Pointer to the client, or NULL if no client uses this nickname.
+		 * @details Does not check registration: callers decide whether a client
+		 * that has not completed registration should be reachable.
+		 */
+		Client *findClientByNick(const std::string &nick);
 
 		/**
 		 * @brief Send a message to another user by adding \r\n at the end of it and adding it to the outputBuffer
