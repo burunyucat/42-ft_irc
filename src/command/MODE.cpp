@@ -7,7 +7,7 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 	int clientfd = -1;
 	std::vector<int>::iterator membersIt;
 	if(!makeActionDependingOfNbParameter(a, n, client, command))
-	return ;
+		return ;
 	for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt != m_clientRegistry.end(); ClientIt++)
 	{
 		if(ClientIt->second.nickname != command.params[2])

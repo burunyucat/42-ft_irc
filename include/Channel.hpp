@@ -43,7 +43,7 @@ struct Channel
 	void splitComma(const std::string &toExtract, std::vector<std::string> &str);
 
 
-	void notifyAllClientOnTheChannel(Client &client, Channel & channel, std::map<int, Client> &m_clientRegistry, const std::string & msg);
+	void notifyAllClientOnTheChannel(Channel & channel, std::map<int, Client> &m_clientRegistry, const std::string & msg);
 	/**
 	 * Functions for consulting the data in the Channel struct.
 	 */
@@ -55,7 +55,7 @@ struct Channel
 	/**
 	 * Functions for changing the data in the Channel struct.
 	 */
-	void	addMember(Client &client, Channel &channel);
+	void	addMember(Client &client, Channel &channel, std::map<int, Client> &m_clientRegistry);
 	/* Removes the fd of all 3 vectors*/
 	void	removeMember(int fd, Channel &channel);
 	void	addOperator(int fd, Channel &channel);
