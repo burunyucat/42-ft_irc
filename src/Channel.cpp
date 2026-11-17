@@ -6,6 +6,24 @@
 #include "Channel.hpp"
 #include "Server.hpp"
 
+bool isPrefixChannel(char prefix)
+{
+	if(prefix == '&' || prefix == '#' || prefix == '+' || prefix == '!')
+		return true;
+	else
+		return false;
+}
+bool parseNamesChannel(std::string channel)
+{
+	std::size_t found;
+	found = channel.find('\a');
+	if(channel.size()> 1 && channel.size()< 51 && isPrefixChannel(channel[0]) && found == channel.npos)
+		return true;
+	else
+		return false;
+}
+
+
 void splitComma(const std::string &toExtract, std::vector<std::string> &str)
 {
 	int nbOfComma;

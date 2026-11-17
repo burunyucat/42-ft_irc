@@ -39,6 +39,9 @@ struct Channel
 	Channel(std::string Name) : name(Name), inviteOnly(false), topicRestricted(false), memberLimit(0), topic("") {}
 };
 
+	//Functions for parsing the name of channels
+	bool isPrefixChannel(char prefix);
+	bool parseNamesChannel(std::string channel);
 	//Functions for separate the params between the comma
 	void splitComma(const std::string &toExtract, std::vector<std::string> &str);
 
