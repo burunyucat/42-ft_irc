@@ -11,22 +11,7 @@ static void checkAddMembers(Channel &channel, const Command& command, Client& cl
 	else
 		addMember(client, channel, m_clientRegistry);
 }
-static bool isPrefix(char prefix)
-{
-	if(prefix == '&' || prefix == '#' || prefix == '+' || prefix == '!')
-		return true;
-	else
-		return false;
-}
-static bool parseNamesChannel(std::string channel)
-{
-	std::size_t found;
-	found = channel.find('\a');
-	if(channel.size()> 1 && channel.size()< 51 && isPrefix(channel[0]) && found == channel.npos)
-		return true;
-	else
-		return false;
-}
+
 void Server::handleJoin(Client& client, const Command& command)
 {
 	std::vector<std::string> channel;

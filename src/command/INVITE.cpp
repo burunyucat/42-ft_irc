@@ -2,7 +2,6 @@
 
 void Server::handleInvite(Client& client, const Command& command)
 {
-	std::vector<std::string> channel;
 	std::vector<std::string> user;
 	
 	//Lire la doc2812 pour la command invite
@@ -12,10 +11,13 @@ void Server::handleInvite(Client& client, const Command& command)
 		Client * targetClient;
 		Channel * ptrChannel;
 		user.push_back(command.params[0]);
-		channel.push_back(command.params[1]);
 		targetClient = findClient(user[0]);
-		ptrChannel = findChannel(channel[0]);
-		if(!targetClient)
+		ptrChannel = findChannel(command.params[1]);
+		if(!parseNamesChannel(command.params[1]))
+			Server::sendNumericAnswer(client, "476" ,  command.params[1] + " :Bad Channel Mask");//ERR_BADCHANMASK
+		else if(!ptrChannel)
+			Server::sendNumericAnswer(client, "403" , command.params[1] + " :No such channel");//ERR_NOSUCHCHANNEL
+		else if(!targetClient)
 			Server::sendNumericAnswer(client, "401" , command.params[0] + " :No such nick/channel");//ERR_NOSUCHNICK
 		else if(isMember(targetClient->fd, *ptrChannel))
 			Server::sendNumericAnswer(client, "443" , user[0]+ ptrChannel->name + " :is already on channel");//ERR_USERONCHANNEL
@@ -26,7 +28,7 @@ void Server::handleInvite(Client& client, const Command& command)
 		else
 		{
 			Server::sendNumericAnswer(*targetClient, "" , client.nickname + " INVITE you to join "+ ptrChannel->name);//notification for target client
-			Server::sendNumericAnswer(*targetClient, "" ,  "Your INVITE for "+ targetClient->nickname+ "  has send ");//notification for the client are invite
+			Server::sendNumericAnswer(*targetClient, "" ,  "Your INVITE for "+ targetClient->nickname+ "  has send ");//notification for the client are inv³ite
 			Server::sendNumericAnswer(client, "341" , ptrChannel->name + " " + user[0]);//RPL_INVITING
 			ptrChannel->invited.push_back(targetClient->fd);
 		}
