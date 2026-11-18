@@ -69,7 +69,7 @@ void	addMember(Client &client, Channel &channel, std::map<int, Client> &m_client
 	std::vector<int>::iterator it = std::find(channel.members.begin(), channel.members.end(), client.fd);
 	if (it == channel.members.end())
 	{
-		notifyAllClientOnTheChannel(channel, m_clientRegistry, client.nickname + " JOIN " + channel.name);
+		Server::broadcast(channel, client.nickname + " JOIN " + channel.name, -1);
 		std::string allNameOnChannel;
 		channel.members.push_back(client.fd);
 		if(!channel.topic.empty())
@@ -116,15 +116,4 @@ void	addInvited(int fd, Channel &channel)
 	if (it == channel.invited.end())
 		channel.invited.push_back(fd);
 
-}
-
-
-void notifyAllClientOnTheChannel(Channel & channel, std::map<int, Client> &m_clientRegistry, const std::string & msg)
-{
-	std::map<int, Client>::iterator findIt;
-	for (std::vector<int>::iterator it = channel.members.begin(); it != channel.members.end(); it++)
-	{
-		findIt = m_clientRegistry.find(*it);
-		Server::sendNumericAnswer(findIt->second, "", msg);//notification
-	}
 }

@@ -46,7 +46,6 @@ struct Channel
 	void splitComma(const std::string &toExtract, std::vector<std::string> &str);
 
 
-	void notifyAllClientOnTheChannel(Channel & channel, std::map<int, Client> &m_clientRegistry, const std::string & msg);
 	/**
 	 * Functions for consulting the data in the Channel struct.
 	 */

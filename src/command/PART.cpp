@@ -1,9 +1,5 @@
 #include "Server.hpp"
 
-
-
-
-
 void Server::handlePart(Client& client, const Command& command)
 {
 	std::vector<std::string> channel;
@@ -19,9 +15,9 @@ void Server::handlePart(Client& client, const Command& command)
 				if(isMember(client.fd, channel[i]))
 				{
 					if(command.params.size()>1)
-						notifyAllClientOnTheChannel(*ptrChannel, this->m_clientRegistry, client.nickname +" PART " +ptrChannel->name + " :" + command.params[1]);
+						broadcast(*ptrChannel, client.nickname +" PART " +ptrChannel->name + " :" + command.params[1], -1);
 					else
-						notifyAllClientOnTheChannel(*ptrChannel, this->m_clientRegistry, client.nickname +" PART " +ptrChannel->name);
+						broadcast(*ptrChannel, client.nickname +" PART " +ptrChannel->name,-1);
 					removeMember(client.fd, *ptrChannel);
 				}
 				else
