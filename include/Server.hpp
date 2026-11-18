@@ -28,7 +28,11 @@ class Server
 		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
 		 */
 		static void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
-
+		/**
+		 * @brief Broadcast function to send messages
+		 */
+		static void broadcast(const Channel &channel, const std::string &message, int exceptFd);
+	
 	private:
 		/** @brief Enable or disable client POLLOUT flags based on pending output. */
 		void updateClientPolloutFlags();
@@ -118,10 +122,7 @@ class Server
 		 * @brief Function to return the constructed nick!user@localhost handle
 		 */
 		std::string fullName(const Client &client) const;
-		/**
-		 * @brief Broadcast function to send messages
-		 */
-		void broadcast(const Channel &channel, const std::string &message, int exceptFd);
+		
 
 		Channel *findChannel(const std::string &name);
 		Client *Server::findClient(const std::string &nickname);

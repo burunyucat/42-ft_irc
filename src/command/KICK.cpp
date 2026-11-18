@@ -32,9 +32,9 @@ void Server::handleKick(Client& client, const Command& command)
 				else
 				{
 					if(command.params.size() > 2)//comment
-						notifyAllClientOnTheChannel(*ptrChannel, this->m_clientRegistry, client.nickname +" KICK " +targetClient->nickname+" on " +ptrChannel->name + " :" + command.params[2]);
+						broadcast(*ptrChannel, client.nickname +" KICK " +targetClient->nickname+" on " +ptrChannel->name + " :" + command.params[2], -1);
 					else
-						notifyAllClientOnTheChannel(*ptrChannel, this->m_clientRegistry, client.nickname +" KICK " +targetClient->nickname+" on "  +ptrChannel->name);
+						broadcast(*ptrChannel, client.nickname +" KICK " +targetClient->nickname+" on "  +ptrChannel->name, -1);
 					removeMember(targetClient->fd, *ptrChannel);
 				}
 			}
