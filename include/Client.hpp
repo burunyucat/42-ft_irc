@@ -32,8 +32,9 @@ struct Client
 	std::string inputBuffer;
 	// Bytes awaiting transmission.
 	std::string outputBuffer;
-
+	// Check if the line too discard is continuous or not.
+	bool	discardingLine;
 	// Default disconnected client
 	Client() : fd(-1), authenticated(false), registered(false),
-		disconnectRequested(false), quitReason("Connection closed") {}
+		disconnectRequested(false), quitReason("Connection closed"), discardingLine(false) {}
 };

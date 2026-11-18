@@ -26,6 +26,7 @@ Server::Server(int port, const std::string& password)
 		m_commandHandler["USER"] = &Server::handleUser;
 		m_commandHandler["JOIN"] = &Server::handleJoin;
 		m_commandHandler["PRIVMSG"] = &Server::handlePrivmsg;
+		m_commandHandler["NOTICE"] = &Server::handleNotice;
 		m_commandHandler["INVITE"] = &Server::handleInvite;
 		m_commandHandler["MODE"] = &Server::handleMode;
 		m_commandHandler["KICK"] = &Server::handleKick;
@@ -178,6 +179,22 @@ bool Server::isNicknameInUse(const std::string &nick, int exceptFd)
 			return true;
 	}
 	return false;
+}
+
+Client *Server::findClientByNick(const std::string &nick)
+{
+	std::string	tested = nick;
+	for (size_t j = 0; j < nick.length(); j++)
+		tested[j] = tolower(nick[j]);
+	for (std::map<int, Client>::iterator it = this->m_clientRegistry.begin(); it != this->m_clientRegistry.end(); ++it)
+	{
+		std::string registered = it->second.nickname;
+		for (size_t i = 0; i < it->second.nickname.length(); i++)
+			registered[i] = tolower(it->second.nickname[i]);
+		if (tested == registered)
+			return &it->second;
+	}
+	return NULL;
 }
 
 void Server::rawMessage(Client &client, const std::string &message)
