@@ -5,6 +5,8 @@
 
 #pragma once
 
+#define LIMIT_LINE 510
+
 #include <string>
 #include <map>
 #include <vector>
@@ -108,11 +110,17 @@ class Server
 		 * @brief A function to check the if the user is registered.
 		 */
 		void tryCompleteRegistration(Client &client);
-
 		/**
 		 * @brief Determines if a nickname exists in the IRC and is in use.
 		*/
 		bool isNicknameInUse(const std::string &nick, int exceptFd);
+		/**
+		 * @brief Find a connected client by nickname (case-insensitive).
+		 * @return Pointer to the client, or NULL if no client uses this nickname.
+		 * @details Does not check registration: callers decide whether a client
+		 * that has not completed registration should be reachable.
+		 */
+		Client *findClientByNick(const std::string &nick);
 
 		/**
 		 * @brief Send a message to another user by adding \r\n at the end of it and adding it to the outputBuffer
@@ -122,7 +130,10 @@ class Server
 		 * @brief Function to return the constructed nick!user@localhost handle
 		 */
 		std::string fullName(const Client &client) const;
-		
+		/**
+		 * @brief Function to send messages to peers in a channel
+		 */
+		void notifyPeers(const Client &client, const std::string &message);
 
 		Channel *findChannel(const std::string &name);
 		Client *Server::findClient(const std::string &nickname);
@@ -137,6 +148,8 @@ class Server
 		void handleJoin(Client& client, const Command& command);
 		/** @brief Handle the PRIVMSG command. */
 		void handlePrivmsg(Client& client, const Command& command);
+		/** @brief Handle the NOTICE command. */
+		void handleNotice(Client& client, const Command& command);
 		/** @brief Handle the INVITE command. */
 		void handleInvite(Client& client, const Command& command);
 		/** @brief Handle the MODE command. */
