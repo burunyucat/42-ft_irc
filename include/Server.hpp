@@ -5,6 +5,8 @@
 
 #pragma once
 
+#define LIMIT_LINE 510
+
 #include <string>
 #include <map>
 #include <vector>
