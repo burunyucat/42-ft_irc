@@ -31,7 +31,7 @@ class Server
 		/**
 		 * @brief Broadcast function to send messages
 		 */
-		static void broadcast(const Channel &channel, const std::string &message, int exceptFd);
+		void broadcast(const Channel &channel, const std::string &message, int exceptFd);
 	
 	private:
 		/** @brief Enable or disable client POLLOUT flags based on pending output. */

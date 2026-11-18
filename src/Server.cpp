@@ -203,7 +203,7 @@ void Server::broadcast(const Channel &channel, const std::string &message, int e
 		std::map<int, Client>::iterator it = this->m_clientRegistry.find(channel.members[i]);
 		if (it == this->m_clientRegistry.end())
 			continue;
-		rawMessage(it->second, message);
+		this->rawMessage(it->second, message);
 	}
 }
 
