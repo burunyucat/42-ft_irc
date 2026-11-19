@@ -140,7 +140,6 @@ class Server
 		void addMemberToChannelNotification(Channel &channel,Client &client);
 
 		Channel *findChannel(const std::string &name);
-		Client *Server::findClient(const std::string &nickname);
 
 		/** @brief Handle the PASS command. */
 		void handlePass(Client& client, const Command& command);
