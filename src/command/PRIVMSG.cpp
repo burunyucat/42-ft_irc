@@ -19,7 +19,7 @@ void Server::handlePrivmsg(Client& client, const Command& command)
 		if (i != command.params.size() - 1)
 			msg.append(" ");
 	}
-	if (command.params[0][0] == '#')
+	if (isPrefixChannel(command.params[0][0]))
 	{
 		Channel *dest = findChannel(command.params[0]);
 		if (!dest)

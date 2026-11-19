@@ -11,9 +11,6 @@
 #include <algorithm>
 #include <map>
 
-class Server;
-class Client;
-
 struct Channel
 {
 	// Channel name
@@ -52,6 +49,7 @@ struct Channel
 	/**
 	 * Functions for consulting the data in the Channel struct.
 	 */
+	// bool	existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry);
 	bool	isMember(int fd, const Channel& channel);
 	bool	isOperator(int fd, const Channel& channel);
 	bool	isInvited(int fd, const Channel& channel);

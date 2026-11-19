@@ -25,13 +25,12 @@ class Server
 
 		/** @brief Run the server's main event loop. */
 		void run();
-		
+
 		/**
 		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
 		 */
 		static void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
-		
-	
+
 	private:
 		/** @brief Enable or disable client POLLOUT flags based on pending output. */
 		void updateClientPolloutFlags();
@@ -135,6 +134,10 @@ class Server
 		 * @brief Function to send messages to peers in a channel
 		 */
 		void notifyPeers(const Client &client, const std::string &message);
+		/**
+		 * @brief Function to add a member to a channel
+		 */
+		void addMemberToChannelNotification(Channel &channel,Client &client);
 
 		Channel *findChannel(const std::string &name);
 		Client *Server::findClient(const std::string &nickname);
