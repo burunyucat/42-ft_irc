@@ -3,7 +3,6 @@
 void Server::handleInvite(Client& client, const Command& command)
 {
 	std::vector<std::string> user;
-	
 	//Lire la doc2812 pour la command invite
 	//Interrogation sur ça:”Il n'est pas nécessaire que le canal sur lequel l'utilisateur cible est invité existe ou soit un canal valide”)
 	if(command.params.size() == 2)
@@ -11,7 +10,7 @@ void Server::handleInvite(Client& client, const Command& command)
 		Client * targetClient;
 		Channel * ptrChannel;
 		user.push_back(command.params[0]);
-		targetClient = findClient(user[0]);
+		targetClient = findClientByNick(user[0]);
 		ptrChannel = findChannel(command.params[1]);
 		if(!parseNamesChannel(command.params[1]))
 			Server::sendNumericAnswer(client, "476" ,  command.params[1] + " :Bad Channel Mask");//ERR_BADCHANMASK

@@ -22,7 +22,7 @@ void Server::handleKick(Client& client, const Command& command)
 				ptrChannel = findChannel(channel[0]);
 			if(ptrChannel)
 			{
-				targetClient = findClient(user[i]);
+				targetClient = findClientByNick(user[i]);
 				if(!targetClient || !isMember(targetClient->fd, *ptrChannel))
 					Server::sendNumericAnswer(client, "441" , user[i] + " " + ptrChannel->name + " :They aren't on that channel");//ERR_USERNOTINCHANNEL
 				else if(!isMember(client.fd, *ptrChannel))

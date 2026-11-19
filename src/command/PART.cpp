@@ -26,7 +26,6 @@ void Server::handlePart(Client& client, const Command& command)
 			else
 				Server::sendNumericAnswer(client, "403" , channel[i] + ":No such channel");//ERR_NOSUCHCHANNEL
 		}
-		
 	}
 	else
 		Server::sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS

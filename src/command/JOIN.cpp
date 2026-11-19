@@ -2,14 +2,22 @@
 #include "Channel.hpp"
 // #include <iostream>
 
-static void checkAddMembers(Server &server, Channel &channel, const Command& command, Client& client)
+static bool checkAddMembers(Channel &channel, Client& client)
 {
-	if(channel.memberLimit!=0 && (channel.members.size() + 1) >= channel.memberLimit)
+	if (isMember(client.fd, channel))
+		return false;
+	else if(channel.memberLimit!=0 && (channel.members.size() + 1) >= channel.memberLimit)
+	{
 		Server::sendNumericAnswer(client, "471" , channel.name + " :Cannot join channel (+l)");//ERR_CHANNELISFULL
+		return false;
+	}
 	else if(channel.inviteOnly && !isInvited(client.fd, channel))
+	{
 		Server::sendNumericAnswer(client, "473" , channel.name + " :Cannot join channel (+i)");//ERR_INVITEONLYCHAN
+		return false;
+	}
 	else
-		addMember(server, client, channel);
+		return true;
 }
 
 void Server::handleJoin(Client& client, const Command& command)
@@ -21,7 +29,7 @@ void Server::handleJoin(Client& client, const Command& command)
 	{
 		if(command.params[0].size()==1 && command.params[0][0] == '0') //Option 0 quit all channel for the client
 		{
-			for (std::map<std::string, Channel>::iterator channelRegistryIt = m_channelRegistry.begin(); channelRegistryIt != m_channelRegistry.end(); channelRegistryIt++)
+			for (std::map<std::string, Channel>::iterator channelRegistryIt = m_channelRegistry.begin(); channelRegistryIt != m_channelRegistry.end(); ++channelRegistryIt)
 			{
 				if(isMember(client.fd, channelRegistryIt->second))
 					removeMember(client.fd, channelRegistryIt->second);
@@ -39,13 +47,23 @@ void Server::handleJoin(Client& client, const Command& command)
 				{
 					if(!ptrchannel->key.empty())
 					{
-						if(command.params.size()>1 && keyOfChannel.size()>i && keyOfChannel[i] ==ptrchannel->key)
-							checkAddMembers(*this, *ptrchannel, command, client);
+						if((command.params.size() > 1) && (keyOfChannel.size() > i) && (keyOfChannel[i] == ptrchannel->key))
+						{
+							if (checkAddMembers(*ptrchannel, client))
+							{
+								addMember(client.fd, *ptrchannel);
+								addMemberToChannelNotification(*ptrchannel, client);
+							}
+						}
 						else
-							Server::sendNumericAnswer(client, "475" , channel[i] + " :Cannot join channel (+k)");//ERR_BADCHANNELKEY
+							sendNumericAnswer(client, "475" , channel[i] + " :Cannot join channel (+k)");//ERR_BADCHANNELKEY
 					}
 					else
-						checkAddMembers(*this, *ptrchannel, command, client);
+						if (checkAddMembers(*ptrchannel, client))
+						{
+							addMember(client.fd, *ptrchannel);
+							addMemberToChannelNotification(*ptrchannel, client);
+						}
 				}
 				else
 				{
@@ -54,11 +72,12 @@ void Server::handleJoin(Client& client, const Command& command)
 						Channel newchannel(channel[i]) ;
 						std::map<std::string, Channel>::iterator channelIt;
 						channelIt = m_channelRegistry.lower_bound(channel[i]);
+						addMember(client.fd, newchannel);
 						m_channelRegistry.insert(channelIt, std::pair<std::string, Channel>(channel[i], newchannel));
-						addMember(*this, client, newchannel);
+						addMemberToChannelNotification(newchannel, client);
 					}
 					else
-						Server::sendNumericAnswer(client, "476" ,  channel[i] + " :Bad Channel Mask");//ERR_BADCHANMASK
+						sendNumericAnswer(client, "476" ,  channel[i] + " :Bad Channel Mask");//ERR_BADCHANMASK
 				}
 			}
 			//Test for parsing JOIN
@@ -69,5 +88,5 @@ void Server::handleJoin(Client& client, const Command& command)
 		}
 	}
 	else
-		Server::sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS
+		sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS
 }

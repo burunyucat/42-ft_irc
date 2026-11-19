@@ -1,5 +1,20 @@
 #include "Server.hpp"
 
+template <typename T>
+static bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
+{
+	if(command.params.size()>2)
+	{
+		leftVariable = rightVariable;
+		return true;
+	}
+	else
+	{
+		Server::sendNumericAnswer(client, "461" , ":Not enough parameters"); //ERR_NEEDMOREPARAMS
+		return false;
+	}
+}
+
 void Server::handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign)
 {
 	int a = 1;
@@ -7,7 +22,7 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 	Client *clientTarget;
 	if(!makeActionDependingOfNbParameter(a, n, client, command))
 		return ;
-	clientTarget = findClient(command.params[2]);
+	clientTarget = findClientByNick(command.params[2]);
 	if (clientTarget && isMember(clientTarget->fd, channel))
 	{
 		//Find Client
@@ -26,21 +41,6 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 	}
 }
 
-
-template <typename T>
-static bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
-{
-	if(command.params.size()>2)
-	{
-		leftVariable = rightVariable;
-		return true;
-	}
-	else
-	{
-		Server::sendNumericAnswer(client, "461" , ":Not enough parameters"); //ERR_NEEDMOREPARAMS
-		return false;
-	}
-}
 void Server::handleMode(Client& client, const Command& command)
 {
 	bool sign;

@@ -232,12 +232,20 @@ Channel *Server::findChannel(const std::string &name)
 	return &it->second;
 }
 
-Client *Server::findClient(const std::string &nickname)
+void Server::addMemberToChannelNotification(Channel &channel,Client &client)
 {
-	for (std::map<int, Client>::iterator ClientIt = m_clientRegistry.begin(); ClientIt != m_clientRegistry.end(); ClientIt++)
+	broadcast(channel, client.nickname + " JOIN " + channel.name, -1);
+	std::string allNameOnChannel;
+	if(!channel.topic.empty())
+		Server::sendNumericAnswer(client, "332", channel.name + " :"+channel.topic);//RPL_TOPIC
+	else
+		Server::sendNumericAnswer(client, "331", channel.name + " :No topic is set");//RPL_NOTOPIC
+	for (std::vector<int>::iterator it = channel.members.begin(); it != channel.members.end(); it++)
 	{
-		if(ClientIt->second.nickname != nickname)
-			return &ClientIt->second;
+		std::map<int, Client>::iterator it_2 = m_clientRegistry.find(*it);
+		if (it_2 != m_clientRegistry.end())
+			allNameOnChannel.append(it_2->second.nickname + " ");
 	}
-	return NULL;
+	Server::sendNumericAnswer(client, "353",  "= " + channel.name +" :"+ allNameOnChannel);//RPL_NAMREPLY
+	Server::sendNumericAnswer(client, "366", channel.name + " :End of NAMES list");//RPL_ENDOFNAMES
 }
