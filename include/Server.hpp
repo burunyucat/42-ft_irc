@@ -25,6 +25,11 @@ class Server
 		/** @brief Run the server's main event loop. */
 		void run();
 
+				/**
+		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
+		 */
+		static void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
+
 	private:
 		/** @brief Enable or disable client POLLOUT flags based on pending output. */
 		void updateClientPolloutFlags();
@@ -95,10 +100,7 @@ class Server
 		 * @param[in] command Command to execute.
 		 */
 		void executeCommand(Client& client, const Command& command);
-		/**
-		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
-		 */
-		void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
+
 		/**
 		 * @brief A function to check the if the user is registered.
 		*/
@@ -131,6 +133,10 @@ class Server
 		 * @brief Function to send messages to peers in a channel
 		 */
 		void notifyPeers(const Client &client, const std::string &message);
+		/**
+		 * @brief Function to add a member to a channel
+		 */
+		void addMemberToChannelNotification(Channel &channel,Client &client);
 
 		Channel *findChannel(const std::string &name);
 
@@ -150,6 +156,7 @@ class Server
 		void handleInvite(Client& client, const Command& command);
 		/** @brief Handle the MODE command. */
 		void handleMode(Client& client, const Command& command);
+		void handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign);
 		/** @brief Handle the KICK command. */
 		void handleKick(Client& client, const Command& command);
 		/** @brief Handle the TOPIC command. */
