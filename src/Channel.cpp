@@ -40,15 +40,6 @@ void splitComma(const std::string &toExtract, std::vector<std::string> &str)
 	} while (index <= nbOfComma);
 }
 
-bool existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry)
-{
-	std::map<std::string, Channel>::iterator channelRegistryIt;
-	channelRegistryIt = std::find(m_channelRegistry.begin(), m_channelRegistry.end(), name);
-	if(channelRegistryIt != m_channelRegistry.end())
-		return true;
-	else
-		return false;
-}
 bool isMember(int fd, const Channel& channel)
 {
 	return std::find(channel.members.begin(), channel.members.end(), fd) != channel.members.end();
@@ -64,12 +55,12 @@ bool	isInvited(int fd, const Channel& channel)
 	return std::find(channel.invited.begin(), channel.invited.end(), fd) != channel.invited.end();
 }
 
-void	addMember(Client &client, Channel &channel, std::map<int, Client> &m_clientRegistry)
+void	addMember(Server &server, Client &client, Channel &channel)
 {
 	std::vector<int>::iterator it = std::find(channel.members.begin(), channel.members.end(), client.fd);
 	if (it == channel.members.end())
 	{
-		Server::broadcast(channel, client.nickname + " JOIN " + channel.name, -1);
+		server.broadcast(channel, client.nickname + " JOIN " + channel.name, -1);
 		std::string allNameOnChannel;
 		channel.members.push_back(client.fd);
 		if(!channel.topic.empty())

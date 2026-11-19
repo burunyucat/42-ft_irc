@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <map>
 
+class Server;
+class Client;
+
 struct Channel
 {
 	// Channel name
@@ -49,7 +52,6 @@ struct Channel
 	/**
 	 * Functions for consulting the data in the Channel struct.
 	 */
-	bool existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry);
 	bool	isMember(int fd, const Channel& channel);
 	bool	isOperator(int fd, const Channel& channel);
 	bool	isInvited(int fd, const Channel& channel);
@@ -57,7 +59,7 @@ struct Channel
 	/**
 	 * Functions for changing the data in the Channel struct.
 	 */
-	void	addMember(Client &client, Channel &channel, std::map<int, Client> &m_clientRegistry);
+	void	addMember(Server &server, Client &client, Channel &channel);
 	/* Removes the fd of all 3 vectors*/
 	void	removeMember(int fd, Channel &channel);
 	void	addOperator(int fd, Channel &channel);

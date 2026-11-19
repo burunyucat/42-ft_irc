@@ -2,14 +2,14 @@
 #include "Channel.hpp"
 // #include <iostream>
 
-static void checkAddMembers(Channel &channel, const Command& command, Client& client, std::map<int, Client> &m_clientRegistry)
+static void checkAddMembers(Server &server, Channel &channel, const Command& command, Client& client)
 {
 	if(channel.memberLimit!=0 && (channel.members.size() + 1) >= channel.memberLimit)
 		Server::sendNumericAnswer(client, "471" , channel.name + " :Cannot join channel (+l)");//ERR_CHANNELISFULL
 	else if(channel.inviteOnly && !isInvited(client.fd, channel))
 		Server::sendNumericAnswer(client, "473" , channel.name + " :Cannot join channel (+i)");//ERR_INVITEONLYCHAN
 	else
-		addMember(client, channel, m_clientRegistry);
+		addMember(server, client, channel);
 }
 
 void Server::handleJoin(Client& client, const Command& command)
@@ -39,13 +39,13 @@ void Server::handleJoin(Client& client, const Command& command)
 				{
 					if(!ptrchannel->key.empty())
 					{
-						if(command.params.size()>1 && keyOfChannel.size()>=i && keyOfChannel[i] ==ptrchannel->key)
-							checkAddMembers(*ptrchannel, command, client, m_clientRegistry);
+						if(command.params.size()>1 && keyOfChannel.size()>i && keyOfChannel[i] ==ptrchannel->key)
+							checkAddMembers(*this, *ptrchannel, command, client);
 						else
 							Server::sendNumericAnswer(client, "475" , channel[i] + " :Cannot join channel (+k)");//ERR_BADCHANNELKEY
 					}
 					else
-						checkAddMembers(*ptrchannel, command, client, m_clientRegistry);
+						checkAddMembers(*this, *ptrchannel, command, client);
 				}
 				else
 				{
@@ -55,7 +55,7 @@ void Server::handleJoin(Client& client, const Command& command)
 						std::map<std::string, Channel>::iterator channelIt;
 						channelIt = m_channelRegistry.lower_bound(channel[i]);
 						m_channelRegistry.insert(channelIt, std::pair<std::string, Channel>(channel[i], newchannel));
-						addMember(client, newchannel, m_clientRegistry);
+						addMember(*this, client, newchannel);
 					}
 					else
 						Server::sendNumericAnswer(client, "476" ,  channel[i] + " :Bad Channel Mask");//ERR_BADCHANMASK
