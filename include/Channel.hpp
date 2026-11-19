@@ -57,7 +57,7 @@ struct Channel
 	/**
 	 * Functions for changing the data in the Channel struct.
 	 */
-	void	addMember(Server &server, Client &client, Channel &channel);
+	void	addMember(int &clientFd, Channel &channel);
 	/* Removes the fd of all 3 vectors*/
 	void	removeMember(int fd, Channel &channel);
 	void	addOperator(int fd, Channel &channel);
