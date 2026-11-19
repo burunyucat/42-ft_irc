@@ -231,3 +231,21 @@ Channel *Server::findChannel(const std::string &name)
 		return NULL;
 	return &it->second;
 }
+
+void Server::addMemberToChannelNotification(Channel &channel,Client &client)
+{
+	broadcast(channel, client.nickname + " JOIN " + channel.name, -1);
+	std::string allNameOnChannel;
+	if(!channel.topic.empty())
+		Server::sendNumericAnswer(client, "332", channel.name + " :"+channel.topic);//RPL_TOPIC
+	else
+		Server::sendNumericAnswer(client, "331", channel.name + " :No topic is set");//RPL_NOTOPIC
+	for (std::vector<int>::iterator it = channel.members.begin(); it != channel.members.end(); it++)
+	{
+		std::map<int, Client>::iterator it_2 = m_clientRegistry.find(*it);
+		if (it_2 != m_clientRegistry.end())
+			allNameOnChannel.append(it_2->second.nickname + " ");
+	}
+	Server::sendNumericAnswer(client, "353",  "= " + channel.name +" :"+ allNameOnChannel);//RPL_NAMREPLY
+	Server::sendNumericAnswer(client, "366", channel.name + " :End of NAMES list");//RPL_ENDOFNAMES
+}
