@@ -251,7 +251,13 @@ void Server::addMemberToChannelNotification(Channel &channel,Client &client)
 	{
 		std::map<int, Client>::iterator it_2 = m_clientRegistry.find(*it);
 		if (it_2 != m_clientRegistry.end())
-			allNameOnChannel.append(it_2->second.nickname + " ");
+		{
+			if (!allNameOnChannel.empty())
+				allNameOnChannel.append(" ");
+			if (isOperator(it_2->second.fd, channel))
+				allNameOnChannel.append("@");
+			allNameOnChannel.append(it_2->second.nickname);
+		}
 	}
 	Server::sendNumericAnswer(client, "353",  "= " + channel.name +" :"+ allNameOnChannel);//RPL_NAMREPLY
 	Server::sendNumericAnswer(client, "366", channel.name + " :End of NAMES list");//RPL_ENDOFNAMES

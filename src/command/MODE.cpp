@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include <cstdlib>
 
 template <typename T>
 static bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
@@ -10,7 +11,7 @@ static bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVari
 	}
 	else
 	{
-		Server::sendNumericAnswer(client, "461" , ":Not enough parameters"); //ERR_NEEDMOREPARAMS
+		Server::sendNumericAnswer(client, "461" , command.name + " :Not enough parameters"); //ERR_NEEDMOREPARAMS
 		return false;
 	}
 }
@@ -27,9 +28,15 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 	{
 		//Find Client
 		if(sign == true)
+		{
 			addOperator(clientTarget->fd, channel);
+			broadcast(channel, fullName(client) + " " + command.name + " " + channel.name + " " + command.params[1] + " " + command.params[2], -1);
+		}
 		else
+		{
 			removeOperator(clientTarget->fd, channel);
+			broadcast(channel, fullName(client) + " " + command.name + " " + channel.name + " " + command.params[1] + " " + command.params[2], -1);
+		}
 	}
 	else
 	{
@@ -50,7 +57,7 @@ void Server::handleMode(Client& client, const Command& command)
 		ptrChannel = findChannel(command.params[0]);
 		if(ptrChannel == NULL)
 		{
-			Server::sendNumericAnswer(client, "403" , command.params[0] + ":No such channel");//ERR_NOSUCHCHANNEL
+			Server::sendNumericAnswer(client, "403" , command.params[0] + " :No such channel");//ERR_NOSUCHCHANNEL
 			return ;
 		}
 		if(!isOperator(client.fd, *ptrChannel))
@@ -72,16 +79,21 @@ void Server::handleMode(Client& client, const Command& command)
 		{
 			if(sign == true)
 			{
-				if(ptrChannel->key.empty() && command.params.size() > 2)
+				if (command.params.size() < 3)
+					sendNumericAnswer(client, "461", command.name + " :Not enough parameters");
+				else if (!ptrChannel->key.empty())
+					Server::sendNumericAnswer(client, "467" , ptrChannel->name + " :Channel key already set");//ERR_KEYSET
+				else
 				{
 					makeActionDependingOfNbParameter(ptrChannel->key, command.params[2], client, command);
-					broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " " + command.params[1], -1);
+					broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " " + command.params[1] + " " + command.params[2], -1);
 				}
-				else
-					Server::sendNumericAnswer(client, "461" , ptrChannel->name + " :Channel key already set");//ERR_KEYSET
 			}
 			else
+			{
 				ptrChannel->key="";
+				broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " " + command.params[1], -1);
+			}
 		}
 		else if(command.params[1][1] == 't')
 		{
@@ -89,24 +101,35 @@ void Server::handleMode(Client& client, const Command& command)
 			broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " " + command.params[1], -1);
 		}
 		else if(command.params[1][1] == 'o')
-		{
 			Server::handleModeOptionO(client, command, *ptrChannel, sign);
-			broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " " + command.params[1], -1);
-		}
 		else if(command.params[1][1] == 'l')
 		{
-			if(sign == true && command.params.size() > 2)
+			if(sign == true)
 			{
-				int convert =std::atoi(command.params[2].c_str());
-				makeActionDependingOfNbParameter(ptrChannel->memberLimit, static_cast<std::size_t>(convert), client, command);
-				broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " " + command.params[1], -1);
+				if (command.params.size() < 3)
+					Server::sendNumericAnswer(client, "461" , command.name + " :Not enough parameters");//ERR_KEYSET
+				else
+				{
+					char *end;
+					long convert =std::strtol(command.params[2].c_str(), &end, 10);
+					if (end == command.params[2].c_str() || *end != '\0' || convert <= 0 )
+						sendNumericAnswer (client, "696", ptrChannel->name + " l " + command.params[2] + " :Invalid mode parameter");
+					else
+					{
+						makeActionDependingOfNbParameter(ptrChannel->memberLimit, static_cast<std::size_t>(convert), client, command);
+						broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " " + command.params[1] + " " + command.params[2], -1);
+					}
+				}
 			}
 			else
+			{
 				ptrChannel->memberLimit = 0;
+				broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " " + command.params[1], -1);
+			}
 		}
 		else
-			Server::sendNumericAnswer(client, "472" , command.params[0] + " :is unknown mode char to me for " + ptrChannel->name);//ERR_UNKNOWNMODE
+			Server::sendNumericAnswer(client, "472" , std::string(1,command.params[1][1]) + " :is unknown mode char to me");//ERR_UNKNOWNMODE
 	}
 	else
-		Server::sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS
+		Server::sendNumericAnswer(client, "461" , command.name + " :Not enough parameters");//ERR_NEEDMOREPARAMS
 }
