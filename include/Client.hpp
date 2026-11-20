@@ -27,6 +27,8 @@ struct Client
 	bool disconnectRequested;
 	// Reason used in the IRC QUIT notification.
 	std::string 	quitReason;
+	// IRC departure done: peers notified and channel memberships removed.
+	bool departed;
 
 	// Received bytes awaiting processing.
 	std::string inputBuffer;
@@ -36,5 +38,6 @@ struct Client
 	bool	discardingLine;
 	// Default disconnected client
 	Client() : fd(-1), authenticated(false), registered(false),
-		disconnectRequested(false), quitReason("Connection closed"), discardingLine(false) {}
+		disconnectRequested(false), quitReason("Connection closed"), departed(false),
+		discardingLine(false) {}
 };

@@ -18,7 +18,8 @@ bool Server::isNicknameInUse(const std::string &nick, int exceptFd)
 		tested[j] = tolower(nick[j]);
 	for (std::map<int, Client>::iterator it = this->m_clientRegistry.begin(); it != this->m_clientRegistry.end(); ++it)
 	{
-		if (it->first == exceptFd)
+		// A departed client no longer holds its nickname.
+		if (it->first == exceptFd || it->second.departed)
 			continue;
 		std::string registered = it->second.nickname;
 		for (size_t i = 0; i < it->second.nickname.length(); i++)
@@ -36,6 +37,9 @@ Client *Server::findClientByNick(const std::string &nick)
 		tested[j] = tolower(nick[j]);
 	for (std::map<int, Client>::iterator it = this->m_clientRegistry.begin(); it != this->m_clientRegistry.end(); ++it)
 	{
+		// A departed client is no longer reachable by nickname.
+		if (it->second.departed)
+			continue;
 		std::string registered = it->second.nickname;
 		for (size_t i = 0; i < it->second.nickname.length(); i++)
 			registered[i] = tolower(it->second.nickname[i]);

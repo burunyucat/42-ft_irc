@@ -47,8 +47,9 @@ void Server::disconnectClient(int fd)
 	if (clientRegistryIt == m_clientRegistry.end())
 		return;
 
-	// Notify IRC peers while the client identity and channel memberships are available.
-	notifyClientQuit(clientRegistryIt->second);
+	// Leave IRC first; no-op if already done when the disconnection was requested.
+	departClient(clientRegistryIt->second);
+
 	// Close the client socket and remove its client record and poll() entry.
 	close(fd);
 	m_clientRegistry.erase(fd);
@@ -62,7 +63,18 @@ void Server::disconnectClient(int fd)
 			break;
 		}
 	}
+}
 
+void Server::departClient(Client& client)
+{
+	if (client.departed)
+		return;
+	client.departed = true;
+
+	// Notify IRC peers while the client's channel memberships are still known.
+	notifyClientQuit(client);
+
+	const int fd = client.fd;
 	// Remove the client's references from every channel and delete channels left empty.
 	for (std::map<std::string, Channel>::iterator channelRegistryIt = m_channelRegistry.begin();
 		channelRegistryIt != m_channelRegistry.end(); )
