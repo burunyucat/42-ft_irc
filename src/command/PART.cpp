@@ -19,6 +19,11 @@ void Server::handlePart(Client& client, const Command& command)
 					else
 						broadcast(*ptrChannel, client.nickname +" PART " +ptrChannel->name,-1);
 					removeMember(client.fd, *ptrChannel);
+					if(ptrChannel->members.size() == 0)
+					{
+						std::map<std::string, Channel>::iterator it = this->m_channelRegistry.find(ptrChannel->name);
+						m_channelRegistry.erase(it);
+					}
 				}
 				else
 					Server::sendNumericAnswer(client, "442" , channel[i] + " :You're not on that channel");//ERR_NOTONCHANNEL
