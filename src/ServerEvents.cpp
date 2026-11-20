@@ -93,11 +93,14 @@ bool Server::handleClientEvents(int clientFd, short revents)
 		ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
 		if (bytesRead > 0) // Data received
 		{
-			// A disconnection requested here is handled on the next iterations,
-			// after poll() has reported POLLOUT and the output buffer is flushed.
 			processClientInput(client, buffer, bytesRead);
 			if (client.disconnectRequested)
+			{
+				// Leave IRC now; the socket is closed on the next iterations,
+				// after poll() has reported POLLOUT and the output buffer is flushed.
+				departClient(client);
 				return !client.outputBuffer.empty();
+			}
 		}
 		else // Connection closed (0) or receive failure (-1): disconnect the client.
 		{

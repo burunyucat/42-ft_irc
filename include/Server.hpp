@@ -75,6 +75,14 @@ class Server
 		void disconnectClient(int fd);
 
 		/**
+		 * @brief Remove a client from IRC: notify peers and leave every channel.
+		 * @param[in,out] client Departing client; its socket stays open.
+		 * @details Run once per client (guarded by client.departed): when a
+		 * disconnection is requested, or at socket closure otherwise.
+		 */
+		void departClient(Client& client);
+
+		/**
 		 * @brief Queue an IRC QUIT notification for clients sharing a channel.
 		 * @param[in] client Departing client, still registered in clients and channels.
 		 * @details Append a CRLF-terminated message to each recipient's output buffer
