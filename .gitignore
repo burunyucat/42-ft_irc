@@ -1,0 +1,8 @@
+en.subject.pdf
+mainTestcommand.cpp
+
+# Build artifacts
+obj/
+obj_bot/
+ircserv
+ircbot

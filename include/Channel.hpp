@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <map>
 
 struct Channel
 {
@@ -32,5 +34,33 @@ struct Channel
 	std::string topic;
 
 	// Default unrestricted channel
-	Channel() : inviteOnly(false), topicRestricted(false), memberLimit(0) {}
+	Channel() : inviteOnly(false), topicRestricted(false), memberLimit(0), topic("") {}
+	// Default unrestricted channel with name
+	explicit Channel(std::string Name) : name(Name), inviteOnly(false), topicRestricted(false), memberLimit(0), topic("") {}
 };
+
+	//Functions for parsing the name of channels
+	bool isPrefixChannel(char prefix);
+	bool parseNamesChannel(std::string channel);
+	//Functions for separate the params between the comma
+	void splitComma(const std::string &toExtract, std::vector<std::string> &str);
+
+
+	/**
+	 * Functions for consulting the data in the Channel struct.
+	 */
+	// bool	existChannel(std::string &name, std::map<std::string, Channel> &m_channelRegistry);
+	bool	isMember(int fd, const Channel& channel);
+	bool	isOperator(int fd, const Channel& channel);
+	bool	isInvited(int fd, const Channel& channel);
+
+	/**
+	 * Functions for changing the data in the Channel struct.
+	 */
+	void	addMember(int &clientFd, Channel &channel);
+	/* Removes the fd of all 3 vectors*/
+	void	removeMember(int fd, Channel &channel);
+	void	addOperator(int fd, Channel &channel);
+	/* Only remove the operator vector*/
+	void	removeOperator(int fd, Channel &channel);
+	void	addInvited(int fd, Channel &channel);

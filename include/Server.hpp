@@ -5,14 +5,18 @@
 
 #pragma once
 
+#define LIMIT_LINE 510
+
 #include <string>
 #include <map>
 #include <vector>
+#include <cstdlib>
 #include <poll.h>
+#include <algorithm>
+#include <set>
 #include "Client.hpp"
 #include "Command.hpp"
 #include "Channel.hpp"
-
 class Server
 {
 	public:
@@ -21,6 +25,11 @@ class Server
 
 		/** @brief Run the server's main event loop. */
 		void run();
+
+		/**
+		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
+		 */
+		static void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
 
 	private:
 		/** @brief Enable or disable client POLLOUT flags based on pending output. */
@@ -93,35 +102,76 @@ class Server
 		 */
 		void executeCommand(Client& client, const Command& command);
 
-		/** @brief Handle the PASS command. */
-		void handlePass();
-		/** @brief Handle the NICK command. */
-		void handleNick();
-		/** @brief Handle the USER command. */
-		void handleUser();
-		/** @brief Handle the JOIN command. */
-		void handleJoin();
-		/** @brief Handle the PRIVMSG command. */
-		void handlePrivmsg();
-		/** @brief Handle the INVITE command. */
-		void handleInvite();
-		/** @brief Handle the MODE command. */
-		void handleMode();
-		/** @brief Handle the KICK command. */
-		void handleKick();
-		/** @brief Handle the TOPIC command. */
-		void handleTopic();
+		/**
+		 * @brief A function to check the if the user is registered.
+		 */
+		void tryCompleteRegistration(Client &client);
+		/**
+		 * @brief Determines if a nickname exists in the IRC and is in use.
+		*/
+		bool isNicknameInUse(const std::string &nick, int exceptFd);
+		/**
+		 * @brief Find a connected client by nickname (case-insensitive).
+		 * @return Pointer to the client, or NULL if no client uses this nickname.
+		 * @details Does not check registration: callers decide whether a client
+		 * that has not completed registration should be reachable.
+		 */
+		Client *findClientByNick(const std::string &nick);
 
+		/**
+		 * @brief Send a message to another user by adding \r\n at the end of it and adding it to the outputBuffer
+		 */
+		void rawMessage(Client &client, const std::string &message);
+		/**
+		 * @brief Function to return the constructed nick!user@localhost handle
+		 */
+		std::string fullName(const Client &client) const;
+		/**
+		 * @brief Broadcast function to send messages
+		 */
+		void broadcast(const Channel &channel, const std::string &message, int exceptFd);
+		/**
+		 * @brief Function to send messages to peers in a channel
+		 */
+		void notifyPeers(const Client &client, const std::string &message);
+		/**
+		 * @brief Function to add a member to a channel
+		 */
+		void addMemberToChannelNotification(Channel &channel,Client &client);
+
+		Channel *findChannel(const std::string &name);
+
+		/** @brief Handle the PASS command. */
+		void handlePass(Client& client, const Command& command);
+		/** @brief Handle the NICK command. */
+		void handleNick(Client& client, const Command& command);
+		/** @brief Handle the USER command. */
+		void handleUser(Client& client, const Command& command);
+		/** @brief Handle the JOIN command. */
+		void handleJoin(Client& client, const Command& command);
+		/** @brief Handle the PRIVMSG command. */
+		void handlePrivmsg(Client& client, const Command& command);
+		/** @brief Handle the NOTICE command. */
+		void handleNotice(Client& client, const Command& command);
+		/** @brief Handle the INVITE command. */
+		void handleInvite(Client& client, const Command& command);
+		/** @brief Handle the MODE command. */
+		void handleMode(Client& client, const Command& command);
+		void handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign);
+		/** @brief Handle the KICK command. */
+		void handleKick(Client& client, const Command& command);
+		/** @brief Handle the TOPIC command. */
+		void handleTopic(Client& client, const Command& command);
 		/** @brief Handle the PART command. */
-		void handlePart();
+		void handlePart(Client& client, const Command& command);
 		/** @brief Handle the QUIT command. */
 		void handleQuit(Client& client, const Command& command);
 		/** @brief Handle the PING command. */
-		void handlePing();
+		void handlePing(Client& client, const Command& command);
 		/** @brief Handle the PONG command. */
-		void handlePong();
+		void handlePong(Client& client, const Command& command);
 		/** @brief Handle the NAMES command. */
-		void handleNames();
+		void handleNames(Client& client, const Command& command);
 
 		/** @brief Listening socket file descriptor. */
 		int m_listenFd;
@@ -136,6 +186,13 @@ class Server
 		/** @brief Connected clients indexed by socket file descriptor. */
 		std::map<int, Client> m_clientRegistry;
 
-		/** @brief Channels indexed by string keys. */
+		/** @brief Channels indexed by string names. */
 		std::map<std::string, Channel> m_channelRegistry;
+
+		/** @brief Commands indexed by a map container along with a typedef for ease of access. */
+		typedef	void (Server::*Handler)(Client&, const Command&);
+		std::map<std::string, Handler> m_commandHandler;
+
+		/** @brief Allowed commands in case the user is not registered. */
+		std::set<std::string> m_authorizedHandler;
 };
