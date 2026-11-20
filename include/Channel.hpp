@@ -36,7 +36,7 @@ struct Channel
 	// Default unrestricted channel
 	Channel() : inviteOnly(false), topicRestricted(false), memberLimit(0), topic("") {}
 	// Default unrestricted channel with name
-	Channel(std::string Name) : name(Name), inviteOnly(false), topicRestricted(false), memberLimit(0), topic("") {}
+	explicit Channel(std::string Name) : name(Name), inviteOnly(false), topicRestricted(false), memberLimit(0), topic("") {}
 };
 
 	//Functions for parsing the name of channels
@@ -57,7 +57,7 @@ struct Channel
 	/**
 	 * Functions for changing the data in the Channel struct.
 	 */
-	void	addMember(int fd, Channel &channel);
+	void	addMember(int &clientFd, Channel &channel);
 	/* Removes the fd of all 3 vectors*/
 	void	removeMember(int fd, Channel &channel);
 	void	addOperator(int fd, Channel &channel);

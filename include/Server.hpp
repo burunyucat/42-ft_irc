@@ -10,12 +10,13 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <cstdlib>
 #include <poll.h>
+#include <algorithm>
 #include <set>
 #include "Client.hpp"
 #include "Command.hpp"
 #include "Channel.hpp"
-
 class Server
 {
 	public:
@@ -25,7 +26,7 @@ class Server
 		/** @brief Run the server's main event loop. */
 		void run();
 
-				/**
+		/**
 		 * @brief A function dedicated for the message sent through executeCommand() and derived functions.
 		 */
 		static void sendNumericAnswer(Client &client, const std::string &num, const std::string &message);
@@ -103,7 +104,7 @@ class Server
 
 		/**
 		 * @brief A function to check the if the user is registered.
-		*/
+		 */
 		void tryCompleteRegistration(Client &client);
 		/**
 		 * @brief Determines if a nickname exists in the IRC and is in use.
@@ -185,7 +186,7 @@ class Server
 		/** @brief Connected clients indexed by socket file descriptor. */
 		std::map<int, Client> m_clientRegistry;
 
-		/** @brief Channels indexed by string keys. */
+		/** @brief Channels indexed by string names. */
 		std::map<std::string, Channel> m_channelRegistry;
 
 		/** @brief Commands indexed by a map container along with a typedef for ease of access. */

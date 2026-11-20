@@ -3,7 +3,6 @@
 void Server::handleInvite(Client& client, const Command& command)
 {
 	std::vector<std::string> user;
-
 	//Lire la doc2812 pour la command invite
 	//Interrogation sur ça:”Il n'est pas nécessaire que le canal sur lequel l'utilisateur cible est invité existe ou soit un canal valide”)
 	if(command.params.size() == 2)
@@ -27,9 +26,11 @@ void Server::handleInvite(Client& client, const Command& command)
 			Server::sendNumericAnswer(client, "482" , ptrChannel->name + " :You're not channel operator");//ERR_CHANOPRIVSNEEDED
 		else
 		{
-			Server::sendNumericAnswer(*targetClient, "" , client.nickname + " INVITE you to join "+ ptrChannel->name);//notification for target client
-			Server::sendNumericAnswer(*targetClient, "" ,  "Your INVITE for "+ targetClient->nickname+ "  has send ");//notification for the client are inv³ite
-			Server::sendNumericAnswer(client, "341" , ptrChannel->name + " " + user[0]);//RPL_INVITING
+			rawMessage(*targetClient, fullName(client) + " INVITE " + client.nickname + " to join "+ ptrChannel->name);
+			// Server::sendNumericAnswer(*targetClient, "" , client.nickname + " INVITE you to join "+ ptrChannel->name);//notification for target client
+			// Server::sendNumericAnswer(*targetClient, "" ,  "Your INVITE for "+ targetClient->nickname+ "  has send ");//notification for the client are inv³ite
+			sendNumericAnswer(client, "341", targetClient->nickname + " " + ptrChannel->name);
+			// Server::sendNumericAnswer(client, "341" , ptrChannel->name + " " + user[0]);//RPL_INVITING
 			ptrChannel->invited.push_back(targetClient->fd);
 		}
 	}

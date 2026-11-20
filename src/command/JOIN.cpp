@@ -29,10 +29,22 @@ void Server::handleJoin(Client& client, const Command& command)
 	{
 		if(command.params[0].size()==1 && command.params[0][0] == '0') //Option 0 quit all channel for the client
 		{
+			std::string channel_to_quit = "";
 			for (std::map<std::string, Channel>::iterator channelRegistryIt = m_channelRegistry.begin(); channelRegistryIt != m_channelRegistry.end(); ++channelRegistryIt)
 			{
 				if(isMember(client.fd, channelRegistryIt->second))
-					removeMember(client.fd, channelRegistryIt->second);
+				{
+					if (!channel_to_quit.empty())
+						channel_to_quit.append(",");
+					channel_to_quit.append(channelRegistryIt->second.name);
+				}
+			}
+			if (!channel_to_quit.empty())
+			{
+				Command command_part;
+				command_part.name = "PART";
+				command_part.params.push_back(channel_to_quit);
+				handlePart(client, command_part);
 			}
 		}
 		else
@@ -73,6 +85,7 @@ void Server::handleJoin(Client& client, const Command& command)
 						std::map<std::string, Channel>::iterator channelIt;
 						channelIt = m_channelRegistry.lower_bound(channel[i]);
 						addMember(client.fd, newchannel);
+						addOperator(client.fd, newchannel);
 						m_channelRegistry.insert(channelIt, std::pair<std::string, Channel>(channel[i], newchannel));
 						addMemberToChannelNotification(newchannel, client);
 					}
