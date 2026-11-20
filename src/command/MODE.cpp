@@ -44,52 +44,55 @@ void Server::handleModeOptionO(Client& client, const Command& command, Channel &
 void Server::handleMode(Client& client, const Command& command)
 {
 	bool sign;
-	Channel channel;
-	std::map<std::string, Channel>::iterator channelRegistryIt;
+	Channel *ptrChannel;
 	if(command.params.size() > 1 && command.params[1].size()==2 && (command.params[1][0] =='-' || command.params[1][0] =='+'))
 	{
-		channelRegistryIt = m_channelRegistry.find(command.params[0]);
-		if(channelRegistryIt == m_channelRegistry.end())
+		ptrChannel = findChannel(command.params[0]);
+		if(ptrChannel == NULL)
 		{
 			Server::sendNumericAnswer(client, "403" , command.params[0] + ":No such channel");//ERR_NOSUCHCHANNEL
 			return ;
 		}
-		channel = m_channelRegistry[command.params[0]];
+		if(!isOperator(client.fd, *ptrChannel))
+		{
+			Server::sendNumericAnswer(client, "482" , ptrChannel->name + " :You're not channel operator");//ERR_CHANOPRIVSNEEDED
+			return;
+		}
 		if(command.params[1][0] =='-')
 			sign = false;
 		else
 			sign = true;
 		//option Mode
 		if(command.params[1][1] == 'i')
-			channel.inviteOnly =sign;
+			ptrChannel->inviteOnly =sign;
 		else if(command.params[1][1] == 'k')
 		{
 			if(sign == true)
 			{
-				if(channel.key.empty())
-					makeActionDependingOfNbParameter(channel.key, command.params[2], client, command);
+				if(ptrChannel->key.empty())
+					makeActionDependingOfNbParameter(ptrChannel->key, command.params[2], client, command);
 				else
-					Server::sendNumericAnswer(client, "467" , channel.name + " :Channel key already set");//ERR_KEYSET
+					Server::sendNumericAnswer(client, "467" , ptrChannel->name + " :Channel key already set");//ERR_KEYSET
 			}
 			else
-				channel.key="";
+				ptrChannel->key="";
 		}
 		else if(command.params[1][1] == 't')
-			channel.topicRestricted = sign;
+			ptrChannel->topicRestricted = sign;
 		else if(command.params[1][1] == 'o')
-			Server::handleModeOptionO(client, command, channel, sign);
+			Server::handleModeOptionO(client, command, *ptrChannel, sign);
 		else if(command.params[1][1] == 'l')
 		{
 			if(sign == true)
 			{
 				int convert =std::atoi(command.params[2].c_str());
-				makeActionDependingOfNbParameter(channel.memberLimit, static_cast<std::size_t>(convert), client, command);
+				makeActionDependingOfNbParameter(ptrChannel->memberLimit, static_cast<std::size_t>(convert), client, command);
 			}
 			else
-				channel.memberLimit = 0;
+				ptrChannel->memberLimit = 0;
 		}
 		else
-			Server::sendNumericAnswer(client, "472" , command.params[0] + " :is unknown mode char to me for " + channel.name);//ERR_UNKNOWNMODE
+			Server::sendNumericAnswer(client, "472" , command.params[0] + " :is unknown mode char to me for " + ptrChannel->name);//ERR_UNKNOWNMODE
 	}
 	else
 		Server::sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS
