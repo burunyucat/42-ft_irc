@@ -14,6 +14,7 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <iostream>
 
 
 Server::Server(int port, const std::string& password)
@@ -77,6 +78,11 @@ void Server::run()
 		return;
 	}
 
+	// TODO(temp fix): allow rebinding while old connections are in TIME_WAIT.
+	// To be reviewed/rewritten properly (error handling, comments).
+	int reuse = 1;
+	setsockopt(m_listenFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+
 	// Set non blocking mode
 	// F_SETFL: sets file status flags
 	// O_NONBLOCK: prevents waiting for I/O readiness.
@@ -100,6 +106,7 @@ void Server::run()
 		sizeof(address)) == -1)
 	{
 		Util::sendErrorMsg("Failed to bind listener socket");
+		std::cerr << errno << std::endl;
 		return;
 	}
 
@@ -220,7 +227,7 @@ void Server::broadcast(const Channel &channel, const std::string &message, int e
 		std::map<int, Client>::iterator it = this->m_clientRegistry.find(channel.members[i]);
 		if (it == this->m_clientRegistry.end())
 			continue;
-		rawMessage(it->second, message);
+		this->rawMessage(it->second, message);
 	}
 }
 
@@ -234,7 +241,7 @@ Channel *Server::findChannel(const std::string &name)
 
 void Server::addMemberToChannelNotification(Channel &channel,Client &client)
 {
-	broadcast(channel, client.nickname + " JOIN " + channel.name, -1);
+	broadcast(channel, fullName(client) + " JOIN " + channel.name, -1);
 	std::string allNameOnChannel;
 	if(!channel.topic.empty())
 		Server::sendNumericAnswer(client, "332", channel.name + " :"+channel.topic);//RPL_TOPIC

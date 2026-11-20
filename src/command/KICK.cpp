@@ -32,14 +32,19 @@ void Server::handleKick(Client& client, const Command& command)
 				else
 				{
 					if(command.params.size() > 2)//comment
-						broadcast(*ptrChannel, client.nickname +" KICK " +targetClient->nickname+" on " +ptrChannel->name + " :" + command.params[2], -1);
+						broadcast(*ptrChannel, fullName(client) +" KICK " + ptrChannel->name + " " +targetClient->nickname+ " :" + command.params[2], -1);
 					else
-						broadcast(*ptrChannel, client.nickname +" KICK " +targetClient->nickname+" on "  +ptrChannel->name, -1);
+						broadcast(*ptrChannel, fullName(client) +" KICK " + ptrChannel->name + " " +targetClient->nickname+ " :" + targetClient->nickname, -1);
 					removeMember(targetClient->fd, *ptrChannel);
 				}
 			}
 			else
-				Server::sendNumericAnswer(client, "403" , channel[i] + ":No such channel");//ERR_NOSUCHCHANNEL
+			{
+				if(channel.size()!=1)
+					Server::sendNumericAnswer(client, "403" , channel[i] + ":No such channel");//ERR_NOSUCHCHANNEL
+				else
+					Server::sendNumericAnswer(client, "403" , channel[0] + ":No such channel");//ERR_NOSUCHCHANNEL
+			}
 		}
 	}
 	else
