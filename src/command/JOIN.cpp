@@ -6,7 +6,7 @@ static bool checkAddMembers(Channel &channel, Client& client)
 {
 	if (isMember(client.fd, channel))
 		return false;
-	else if(channel.memberLimit!=0 && (channel.members.size() + 1) >= channel.memberLimit)
+	else if(channel.memberLimit!=0 && (channel.members.size()) >= channel.memberLimit)
 	{
 		Server::sendNumericAnswer(client, "471" , channel.name + " :Cannot join channel (+l)");//ERR_CHANNELISFULL
 		return false;
