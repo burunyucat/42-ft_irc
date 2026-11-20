@@ -12,7 +12,6 @@
 #include <vector>
 #include <cstdlib>
 #include <poll.h>
-#include <algorithm>
 #include <set>
 #include "Client.hpp"
 #include "Command.hpp"

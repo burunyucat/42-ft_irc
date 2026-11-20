@@ -55,13 +55,35 @@ bool Server::handleClientEvents(int clientFd, short revents)
 	if (clientRegistryIt == m_clientRegistry.end())
 		return true;
 
-	if (clientRegistryIt->second.disconnectRequested)
-		return false;
+	Client& client = clientRegistryIt->second;
 
 	if (revents & POLLERR)
 	{
 		Util::sendErrorMsg("Client socket failed. Client will be disconnected.");
 		return false;
+	}
+
+	// Deferred disconnection: flush pending output through POLLOUT only,
+	// then close once the buffer is empty.
+	// Commands are no longer processed.
+	if (client.disconnectRequested)
+	{
+		if (client.outputBuffer.empty() || (revents & POLLHUP))
+			return false;
+
+		if (revents & POLLOUT)
+		{
+			if (!processClientOutput(client) || client.outputBuffer.empty())
+				return false;
+		}
+		if (revents & POLLIN)
+		{
+			// Discard incoming data, but detect a peer that closed the connection.
+			char discard[2048];
+			if (recv(clientFd, discard, sizeof(discard), 0) <= 0)
+				return false;
+		}
+		return true;
 	}
 
 	// Drain remaining client data across iterations before disconnecting.
@@ -71,9 +93,11 @@ bool Server::handleClientEvents(int clientFd, short revents)
 		ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
 		if (bytesRead > 0) // Data received
 		{
-			processClientInput(clientRegistryIt->second, buffer, bytesRead);
-			if (clientRegistryIt->second.disconnectRequested)
-				return false;
+			// A disconnection requested here is handled on the next iterations,
+			// after poll() has reported POLLOUT and the output buffer is flushed.
+			processClientInput(client, buffer, bytesRead);
+			if (client.disconnectRequested)
+				return !client.outputBuffer.empty();
 		}
 		else // Connection closed (0) or receive failure (-1): disconnect the client.
 		{
@@ -85,7 +109,7 @@ bool Server::handleClientEvents(int clientFd, short revents)
 
 	if (revents & POLLOUT)
 	{
-		if (!processClientOutput(clientRegistryIt->second))
+		if (!processClientOutput(client))
 			return false;
 	}
 

@@ -1,5 +1,10 @@
 en.subject.pdf
 mainTestcommand.cpp
+.vscode
+Doxyfile
+comp
+docs
+compile_flags.txt
 
 # Build artifacts
 obj/
