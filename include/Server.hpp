@@ -179,6 +179,14 @@ class Server
 		void handlePong(Client& client, const Command& command);
 		/** @brief Handle the NAMES command. */
 		void handleNames(Client& client, const Command& command);
+		/**
+		 * @brief Send the RPL_NAMREPLY (353) lines listing a channel's members.
+		 * @param[in,out] client Client receiving the list.
+		 * @param[in] channel Channel to list; operators are prefixed with '@'.
+		 * @details Splits the list over several lines so each one fits in
+		 * 512 bytes. RPL_ENDOFNAMES (366) is left to the caller.
+		 */
+		void sendNamesReply(Client& client, const Channel& channel);
 
 		/** @brief Listening socket file descriptor. */
 		int m_listenFd;
