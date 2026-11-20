@@ -29,7 +29,7 @@ void Server::handlePart(Client& client, const Command& command)
 					Server::sendNumericAnswer(client, "442" , channel[i] + " :You're not on that channel");//ERR_NOTONCHANNEL
 			}
 			else
-				Server::sendNumericAnswer(client, "403" , channel[i] + ":No such channel");//ERR_NOSUCHCHANNEL
+				Server::sendNumericAnswer(client, "403" , channel[i] + " :No such channel");//ERR_NOSUCHCHANNEL
 		}
 	}
 	else

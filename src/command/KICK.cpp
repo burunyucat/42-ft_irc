@@ -39,7 +39,7 @@ void Server::handleKick(Client& client, const Command& command)
 				}
 			}
 			else
-				Server::sendNumericAnswer(client, "403" , channel[i] + ":No such channel");//ERR_NOSUCHCHANNEL
+				Server::sendNumericAnswer(client, "403" , channel[i] + " :No such channel");//ERR_NOSUCHCHANNEL
 		}
 	}
 	else

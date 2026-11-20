@@ -85,7 +85,9 @@ void Server::handleMode(Client& client, const Command& command)
 		{
 			if(sign == true)
 			{
-				int convert =std::atoi(command.params[2].c_str());
+				int convert = 0;
+				if(command.params.size() >2)
+					convert =std::atoi(command.params[2].c_str());
 				makeActionDependingOfNbParameter(ptrChannel->memberLimit, static_cast<std::size_t>(convert), client, command);
 			}
 			else
