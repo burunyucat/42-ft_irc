@@ -15,6 +15,7 @@ SRC_FILES = main.cpp \
 			ServerConnections.cpp \
 			ServerClientIO.cpp \
 			ServerCommands.cpp \
+			ServerUtils.cpp \
 			Signal.cpp \
 			Channel.cpp \
 			command/PASS.cpp \
