@@ -12,7 +12,7 @@ void Server::handlePart(Client& client, const Command& command)
 			ptrChannel = findChannel(channel[i]);
 			if(ptrChannel)
 			{
-				if(isMember(client.fd, channel[i]))
+				if(isMember(client.fd, *ptrChannel))
 				{
 					if(command.params.size()>1)
 						broadcast(*ptrChannel, client.nickname +" PART " +ptrChannel->name + " :" + command.params[1], -1);
