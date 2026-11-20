@@ -73,6 +73,7 @@ void Server::handleJoin(Client& client, const Command& command)
 						std::map<std::string, Channel>::iterator channelIt;
 						channelIt = m_channelRegistry.lower_bound(channel[i]);
 						addMember(client.fd, newchannel);
+						addOperator(client.fd, newchannel);
 						m_channelRegistry.insert(channelIt, std::pair<std::string, Channel>(channel[i], newchannel));
 						addMemberToChannelNotification(newchannel, client);
 					}
