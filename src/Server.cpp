@@ -77,8 +77,8 @@ void Server::run()
 		return;
 	}
 
-	// TODO(temp fix): allow rebinding while old connections are in TIME_WAIT.
-	// To be reviewed/rewritten properly (error handling, comments).
+	// Allow rebinding the port while previous connections are in TIME_WAIT,
+	// so the server can be restarted immediately after a shutdown.
 	int reuse = 1;
 	setsockopt(m_listenFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
