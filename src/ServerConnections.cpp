@@ -49,7 +49,6 @@ void Server::disconnectClient(int fd)
 
 	// Notify IRC peers while the client identity and channel memberships are available.
 	notifyClientQuit(clientRegistryIt->second);
-	processClientOutput(clientRegistryIt->second);
 	// Close the client socket and remove its client record and poll() entry.
 	close(fd);
 	m_clientRegistry.erase(fd);
