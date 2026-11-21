@@ -6,7 +6,6 @@
 #include "Server.hpp"
 #include "Util.hpp"
 #include <algorithm>
-#include <cerrno>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -16,9 +15,10 @@ void Server::acceptClient()
 	int clientFd = accept(m_listenFd, NULL, NULL);
 	if (clientFd == -1)
 	{
-		// EAGAIN / EWOULDBLOCK: no connection available anymore.
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-			Util::sendErrorMsg("Failed to accept client");
+		// poll() reported the listener readable, so a failure is unexpected
+		// (e.g. the pending connection was reset). The error code is not
+		// inspected: skip it, and the next poll() reports any remaining connection.
+		Util::sendErrorMsg("Failed to accept client");
 		return;
 	}
 
