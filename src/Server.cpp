@@ -163,6 +163,9 @@ void Server::run()
 			}
 		}
 
+		// Drop clients that stopped reading, now that no client is being iterated.
+		dropOverflowingClients(disconnectedFds);
+
 		// Remove disconnected clients before the next poll().
 		for (size_t i = 0; i < disconnectedFds.size(); ++i)
 			disconnectClient(disconnectedFds[i]);

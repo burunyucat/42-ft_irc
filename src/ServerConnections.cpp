@@ -96,3 +96,25 @@ void Server::departClient(Client& client)
 			++channelRegistryIt;
 	}
 }
+
+void Server::dropOverflowingClients(std::vector<int>& disconnectedFds)
+{
+	// departClient() only updates channels and appends to other clients'
+	// output buffers: it never removes a client, so this iterator stays valid.
+	for (std::map<int, Client>::iterator clientRegistryIt = m_clientRegistry.begin();
+		clientRegistryIt != m_clientRegistry.end(); ++clientRegistryIt)
+	{
+		Client& client = clientRegistryIt->second;
+		if (client.outputBuffer.size() <= MAX_SENDQ)
+			continue;
+
+		// Keep the reason of a client that already requested its disconnection.
+		if (!client.departed)
+			client.quitReason = "Max SendQ exceeded";
+		departClient(client);
+
+		// The client does not read: close it now instead of flushing.
+		client.outputBuffer.clear();
+		disconnectedFds.push_back(client.fd);
+	}
+}
