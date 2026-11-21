@@ -8,6 +8,7 @@
 #include "Util.hpp"
 #include <cerrno>
 #include <cstddef>
+#include <exception>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/poll.h>
@@ -156,10 +157,23 @@ void Server::run()
 				if (!handleListenerEvents(m_pollFds[i].revents))
 					return;
 			}
-			else if (!handleClientEvents(m_pollFds[i].fd, m_pollFds[i].revents))
+			else
 			{
+				bool keepClient;
+				try
+				{
+					keepClient = handleClientEvents(m_pollFds[i].fd, m_pollFds[i].revents);
+				}
+				catch (const std::exception& e)
+				{
+					// e.g. std::bad_alloc: drop this client, keep serving the others.
+					Util::sendErrorMsg(std::string("Client handling failed (") + e.what()
+						+ "). Client will be disconnected.");
+					keepClient = false;
+				}
 				// Defer removal to avoid shifting descriptors during this loop.
-				disconnectedFds.push_back(m_pollFds[i].fd);
+				if (!keepClient)
+					disconnectedFds.push_back(m_pollFds[i].fd);
 			}
 		}
 
