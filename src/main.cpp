@@ -25,6 +25,11 @@ int main(int ac, char** av)
 		return 1;
 	}
 	std::string password(av[2]);
+	if (password.empty())
+	{
+		Util::sendErrorMsg("Invalid password: must not be empty");
+		return 1;
+	}
 
 	Server srv(port, password);
 
