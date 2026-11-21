@@ -36,7 +36,6 @@ Server::Server(int port, const std::string& password)
 		m_commandHandler["QUIT"] = &Server::handleQuit;
 		m_commandHandler["PING"] = &Server::handlePing;
 		m_commandHandler["PONG"] = &Server::handlePong;
-		m_commandHandler["NAMES"] = &Server::handleNames;
 		m_authorizedHandler.insert("PASS");
 		m_authorizedHandler.insert("NICK");
 		m_authorizedHandler.insert("USER");

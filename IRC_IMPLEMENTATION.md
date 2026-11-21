@@ -109,9 +109,8 @@ doit aussi être écrite.
 | `handlePart` | Notifier le départ et retirer le membre du salon. |
 | `handlePing` | Préparer la réponse `PONG`. |
 | `handlePong` | Traiter la réponse à un éventuel `PING` du serveur. |
-| `handleNames` | Préparer la liste des membres visibles d'un salon. |
 
-Ces quatre commandes ne sont pas explicitement exigées dans `en.subject.pdf`.
+Ces trois commandes ne sont pas explicitement exigées dans `en.subject.pdf`.
 Elles peuvent néanmoins devenir nécessaires au bon fonctionnement du client de
 référence, qui doit se connecter et fonctionner sans erreur. En particulier,
 `PING`/`PONG` servent à vérifier que la connexion est toujours active.

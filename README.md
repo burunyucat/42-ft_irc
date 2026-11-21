@@ -222,7 +222,6 @@ Le signe `+` active ou ajoute un mode, tandis que le signe `-` le désactive ou 
 - `QUIT` : quitter le serveur proprement.
 - `PING` : vérifier la disponibilité d'une connexion.
 - `PONG` : répondre à un `PING`.
-- `NAMES` : obtenir la liste des membres d'un salon.
 
 Certaines commandes supplémentaires peuvent être nécessaires pour assurer la compatibilité avec le client IRC de référence.
 

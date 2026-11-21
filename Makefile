@@ -30,7 +30,6 @@ SRC_FILES = main.cpp \
 			command/PART.cpp \
 			command/PING.cpp \
 			command/PONG.cpp \
-			command/NAMES.cpp \
 			command/NOTICE.cpp \
 			command/QUIT.cpp
 BOT_DIR = src/bot
