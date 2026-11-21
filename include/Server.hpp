@@ -187,8 +187,6 @@ class Server
 		void handlePing(Client& client, const Command& command);
 		/** @brief Handle the PONG command. */
 		void handlePong(Client& client, const Command& command);
-		/** @brief Handle the NAMES command. */
-		void handleNames(Client& client, const Command& command);
 
 		/** @brief Listening socket file descriptor. */
 		int m_listenFd;
