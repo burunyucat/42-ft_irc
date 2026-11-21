@@ -6,7 +6,6 @@
 #include "Server.hpp"
 #include "Util.hpp"
 #include <algorithm>
-#include <cerrno>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -16,9 +15,10 @@ void Server::acceptClient()
 	int clientFd = accept(m_listenFd, NULL, NULL);
 	if (clientFd == -1)
 	{
-		// EAGAIN / EWOULDBLOCK: no connection available anymore.
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-			Util::sendErrorMsg("Failed to accept client");
+		// poll() reported the listener readable, so a failure is unexpected
+		// (e.g. the pending connection was reset). The error code is not
+		// inspected: skip it, and the next poll() reports any remaining connection.
+		Util::sendErrorMsg("Failed to accept client");
 		return;
 	}
 
@@ -94,5 +94,29 @@ void Server::departClient(Client& client)
 			m_channelRegistry.erase(channelRegistryIt++);
 		else
 			++channelRegistryIt;
+	}
+}
+
+void Server::dropOverflowingClients(std::vector<int>& disconnectedFds)
+{
+	// departClient() only updates channels and appends to other clients'
+	// output buffers: it never removes a client, so this iterator stays valid.
+	for (std::map<int, Client>::iterator clientRegistryIt = m_clientRegistry.begin();
+		clientRegistryIt != m_clientRegistry.end(); ++clientRegistryIt)
+	{
+		Client& client = clientRegistryIt->second;
+		if (client.outputBuffer.size() <= MAX_SENDQ)
+			continue;
+
+		// Keep the reason of a client that already requested its disconnection.
+		if (!client.departed)
+		{
+			client.quitReason = "Max SendQ exceeded";
+			departClient(client);
+		}
+
+		// The client does not read: close it now instead of flushing.
+		client.outputBuffer.clear();
+		disconnectedFds.push_back(client.fd);
 	}
 }

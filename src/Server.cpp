@@ -8,6 +8,7 @@
 #include "Util.hpp"
 #include <cerrno>
 #include <cstddef>
+#include <exception>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/poll.h>
@@ -96,10 +97,10 @@ void Server::run()
 	sockaddr_in address = {};
 	address.sin_family = AF_INET; // IPv4 address family, matching the socket.
 	address.sin_port = htons(m_port);
-	address.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1: local connections only.
+	address.sin_addr.s_addr = htonl(INADDR_ANY); // 0.0.0.0: accept connections on every network interface.
 	const sockaddr* sockaddr_ptr = reinterpret_cast<const sockaddr*>(&address);
 
-	// Binding port and loopback address to listener socket
+	// Bind the listener socket to the port on every network interface
 	if (bind(m_listenFd,
 		sockaddr_ptr,
 		sizeof(address)) == -1)
@@ -156,12 +157,28 @@ void Server::run()
 				if (!handleListenerEvents(m_pollFds[i].revents))
 					return;
 			}
-			else if (!handleClientEvents(m_pollFds[i].fd, m_pollFds[i].revents))
+			else
 			{
+				bool keepClient;
+				try
+				{
+					keepClient = handleClientEvents(m_pollFds[i].fd, m_pollFds[i].revents);
+				}
+				catch (const std::exception& e)
+				{
+					// e.g. std::bad_alloc: drop this client, keep serving the others.
+					Util::sendErrorMsg(std::string("Client handling failed (") + e.what()
+						+ "). Client will be disconnected.");
+					keepClient = false;
+				}
 				// Defer removal to avoid shifting descriptors during this loop.
-				disconnectedFds.push_back(m_pollFds[i].fd);
+				if (!keepClient)
+					disconnectedFds.push_back(m_pollFds[i].fd);
 			}
 		}
+
+		// Drop clients that stopped reading
+		dropOverflowingClients(disconnectedFds);
 
 		// Remove disconnected clients before the next poll().
 		for (size_t i = 0; i < disconnectedFds.size(); ++i)

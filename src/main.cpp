@@ -6,6 +6,7 @@
 #include "Server.hpp"
 #include "Util.hpp"
 
+#include <exception>
 #include <string>
 
 /** @brief Parse a decimal port in the range 1 to 65535 without overflow. */
@@ -25,12 +26,27 @@ int main(int ac, char** av)
 		return 1;
 	}
 	std::string password(av[2]);
+	if (password.empty())
+	{
+		Util::sendErrorMsg("Invalid password: must not be empty");
+		return 1;
+	}
 
-	Server srv(port, password);
+	// Last resort: a failure the event loop could not recover from (e.g. out of
+	// memory outside client handling) stops the server cleanly, closing every
+	// socket through the Server destructor, instead of aborting.
+	try
+	{
+		Server srv(port, password);
+		srv.run();
+	}
+	catch (const std::exception& e)
+	{
+		Util::sendErrorMsg(std::string("Server stopped: ") + e.what());
+		return 1;
+	}
 
-	srv.run();
-
-    return 0;
+	return 0;
 }
 
 static bool parsePort(const std::string& argument, int& port)
