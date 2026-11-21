@@ -96,7 +96,7 @@ void Server::run()
 	sockaddr_in address = {};
 	address.sin_family = AF_INET; // IPv4 address family, matching the socket.
 	address.sin_port = htons(m_port);
-	address.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1: local connections only.
+	address.sin_addr.s_addr = htonl(INADDR_ANY); // 127.0.0.1: local connections only.
 	const sockaddr* sockaddr_ptr = reinterpret_cast<const sockaddr*>(&address);
 
 	// Binding port and loopback address to listener socket
@@ -163,7 +163,7 @@ void Server::run()
 			}
 		}
 
-		// Drop clients that stopped reading, now that no client is being iterated.
+		// Drop clients that stopped reading
 		dropOverflowingClients(disconnectedFds);
 
 		// Remove disconnected clients before the next poll().

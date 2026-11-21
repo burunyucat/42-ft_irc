@@ -110,8 +110,10 @@ void Server::dropOverflowingClients(std::vector<int>& disconnectedFds)
 
 		// Keep the reason of a client that already requested its disconnection.
 		if (!client.departed)
+		{
 			client.quitReason = "Max SendQ exceeded";
-		departClient(client);
+			departClient(client);
+		}
 
 		// The client does not read: close it now instead of flushing.
 		client.outputBuffer.clear();
