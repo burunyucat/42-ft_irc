@@ -6,8 +6,9 @@
 #pragma once
 
 #define LIMIT_LINE 510
-// Maximum pending output per client (SendQ), in bytes.
-#define MAX_SENDQ (512 * 1024)
+// Maximum pending output per client (SendQ), in bytes. Large enough for a
+// client suspended (Ctrl+Z) during a channel flood to get every message back.
+#define MAX_SENDQ (8 * 1024 * 1024)
 
 #include <string>
 #include <map>
@@ -84,14 +85,11 @@ class Server
 		 */
 		void departClient(Client& client);
 
-		/**
-		 * @brief Drop clients whose pending output exceeds MAX_SENDQ.
-		 * @param[in,out] disconnectedFds Receives the fd of every dropped client.
-		 * @details Depart each such client with the reason "Max SendQ exceeded"
-		 * and discard its pending output, so it is closed without being flushed.
-		 * Call it from the poll loop only, never while clients or channel members
-		 * are being iterated (e.g. from rawMessage() or broadcast()).
-		 */
+		// Drop clients whose pending output exceeds MAX_SENDQ: depart each one
+		// with the reason "Max SendQ exceeded", discard its pending output and
+		// add its fd to disconnectedFds, so it is closed without being flushed.
+		// Call it from the poll loop only, never while clients or channel members
+		// are being iterated (e.g. from rawMessage() or broadcast()).
 		void dropOverflowingClients(std::vector<int>& disconnectedFds);
 
 		/**

@@ -97,10 +97,10 @@ void Server::run()
 	sockaddr_in address = {};
 	address.sin_family = AF_INET; // IPv4 address family, matching the socket.
 	address.sin_port = htons(m_port);
-	address.sin_addr.s_addr = htonl(INADDR_ANY); // 127.0.0.1: local connections only.
+	address.sin_addr.s_addr = htonl(INADDR_ANY); // 0.0.0.0: accept connections on every network interface.
 	const sockaddr* sockaddr_ptr = reinterpret_cast<const sockaddr*>(&address);
 
-	// Binding port and loopback address to listener socket
+	// Bind the listener socket to the port on every network interface
 	if (bind(m_listenFd,
 		sockaddr_ptr,
 		sizeof(address)) == -1)
