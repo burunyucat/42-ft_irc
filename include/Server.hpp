@@ -174,7 +174,8 @@ class Server
 		void handleInvite(Client& client, const Command& command);
 		/** @brief Handle the MODE command. */
 		void handleMode(Client& client, const Command& command);
-		void handleModeOptionO(Client& client, const Command& command, Channel &channel, bool &sign);
+		/** @brief Apply +o / -o to one nick; return true when the change was applied. */
+		bool handleModeOptionO(Client& client, Channel &channel, const std::string &nick, bool sign);
 		/** @brief Handle the KICK command. */
 		void handleKick(Client& client, const Command& command);
 		/** @brief Handle the TOPIC command. */

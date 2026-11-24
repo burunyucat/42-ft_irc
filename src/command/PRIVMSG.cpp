@@ -12,36 +12,45 @@ void Server::handlePrivmsg(Client& client, const Command& command)
 		sendNumericAnswer(client, "412", ":No text to send");
 		return;
 	}
-	std::string msg = fullName(client) + " " + command.name + " " + command.params[0] + " :";
+	std::string txt = "";
 	for (size_t i = 1; i < command.params.size(); i++)
 	{
-		msg.append(command.params[i]);
+		txt.append(command.params[i]);
 		if (i != command.params.size() - 1)
-			msg.append(" ");
+			txt.append(" ");
 	}
-	if (isPrefixChannel(command.params[0][0]))
+	std::vector<std::string> targets;
+	splitComma(command.params[0], targets);
+	for (std::vector<std::string>::iterator target = targets.begin(); target != targets.end(); ++target)
 	{
-		Channel *dest = findChannel(command.params[0]);
-		if (!dest)
+		const std::string &name = *target;
+		if (name.empty() == true || name == "")
+			continue;
+		std::string msg = fullName(client) + " " + command.name + " " + name + " :" + txt;
+		if (isPrefixChannel(name[0]))
 		{
-			sendNumericAnswer(client, "403", command.params[0] + " :No such channel");
-			return;
+			Channel *dest = findChannel(name);
+			if (!dest)
+			{
+				sendNumericAnswer(client, "403", name + " :No such channel");
+				continue;
+			}
+			else if (!isMember(client.fd, *dest))
+			{
+				sendNumericAnswer(client, "404", name + " :Cannot send to channel");
+				continue;
+			}
+			broadcast(*dest, msg, client.fd);
 		}
-		else if (!isMember(client.fd, *dest))
+		else
 		{
-			sendNumericAnswer(client, "404", command.params[0] + " :Cannot send to channel");
-			return;
+			Client *dest_f = findClientByNick(name);
+			if (!dest_f || !dest_f->registered)
+			{
+				sendNumericAnswer(client, "401", name + " :No such nick/channel");
+				continue;
+			}
+			rawMessage(*dest_f, msg);
 		}
-		broadcast(*dest, msg, client.fd);
-	}
-	else
-	{
-		Client *dest_f = findClientByNick(command.params[0]);
-		if (!dest_f || !dest_f->registered)
-		{
-			sendNumericAnswer(client, "401", command.params[0] + " :No such nick/channel");
-			return;
-		}
-		rawMessage(*dest_f, msg);
 	}
 }

@@ -3,8 +3,6 @@
 void Server::handleInvite(Client& client, const Command& command)
 {
 	std::vector<std::string> user;
-	//Lire la doc2812 pour la command invite
-	//Interrogation sur ça:”Il n'est pas nécessaire que le canal sur lequel l'utilisateur cible est invité existe ou soit un canal valide”)
 	if(command.params.size() == 2)
 	{
 		Client * targetClient;
@@ -27,10 +25,7 @@ void Server::handleInvite(Client& client, const Command& command)
 		else
 		{
 			rawMessage(*targetClient, fullName(client) + " INVITE " + targetClient->nickname + " "+ ptrChannel->name);
-			// Server::sendNumericAnswer(*targetClient, "" , client.nickname + " INVITE you to join "+ ptrChannel->name);//notification for target client
-			// Server::sendNumericAnswer(*targetClient, "" ,  "Your INVITE for "+ targetClient->nickname+ "  has send ");//notification for the client are inv³ite
-			sendNumericAnswer(client, "341", targetClient->nickname + " " + ptrChannel->name);
-			// Server::sendNumericAnswer(client, "341" , ptrChannel->name + " " + user[0]);//RPL_INVITING
+			sendNumericAnswer(client, "341", ptrChannel->name + " " + targetClient->nickname);
 			addInvited(targetClient->fd, *ptrChannel);
 		}
 	}

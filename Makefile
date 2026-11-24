@@ -1,5 +1,4 @@
 NAME = ircserv
-BOT_NAME = ircbot
 
 CC = c++
 CFLAGS = -Wall -Werror -Wextra -std=c++98
@@ -33,16 +32,11 @@ SRC_FILES = main.cpp \
 			command/NOTICE.cpp \
 			command/QUIT.cpp
 BOT_DIR = src/bot
-BOT_FILES = main.cpp \
-			Bot.cpp
 
 SRC =$(addprefix $(SRC_DIR)/, $(SRC_FILES))
-BOT_SRC = $(addprefix $(BOT_DIR)/, $(BOT_FILES))
 
 OBJ_DIR = obj
 OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC))
-BOT_OBJ_DIR = obj_bot
-BOT_OBJ = $(patsubst $(BOT_DIR)/%.cpp, $(BOT_OBJ_DIR)/%.o, $(BOT_SRC))
 
 DEPS = $(OBJ:.o=.d) $(BOT_OBJ:.o=.d)
 
@@ -53,35 +47,26 @@ RESET = \033[0m
 
 all : $(NAME)
 	@printf "$(GREEN)✨ $(NAME) ready! ✨$(RESET)\n"
-bonus: $(BOT_NAME)
-	@printf "$(GREEN)✨ $(BOT_NAME) ready! ✨$(RESET)\n"
 
 $(NAME) : $(OBJ)
 	@printf "$(YELLOW)Linking $(NAME)...$(RESET)\n"
 	@$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
-$(BOT_NAME) : $(BOT_OBJ)
-	@printf "$(YELLOW)Linking $(BOT_NAME)...$(RESET)\n"
-	@$(CC) $(CFLAGS) $(BOT_OBJ) -o $(BOT_NAME)
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
-	@mkdir -p $(dir $@)
-	@printf "$(YELLOW)Compiling $<...$(RESET)\n"
-	@$(CC) -I $(INCLUDE) $(DEPFLAGS) $(CFLAGS) -c -g $< -o $@
-$(BOT_OBJ_DIR)/%.o : $(BOT_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@printf "$(YELLOW)Compiling $<...$(RESET)\n"
 	@$(CC) -I $(INCLUDE) $(DEPFLAGS) $(CFLAGS) -c -g $< -o $@
 
 clean :
 	@printf "$(RED)Cleaning object folder... 🧹$(RESET)\n"
-	@rm -rf $(OBJ_DIR) $(BOT_OBJ_DIR)
+	@rm -rf $(OBJ_DIR)
 
 fclean : clean
-	@printf "$(RED)Deleting $(NAME) $(BOT_NAME) executable... 🧹⚠️$(RESET)\n"
-	@rm -f $(NAME) $(BOT_NAME)
+	@printf "$(RED)Deleting $(NAME) executable... 🧹⚠️$(RESET)\n"
+	@rm -f $(NAME)
 
 re:	fclean all
 
 -include $(DEPS)
 
-.PHONY:	all bonus clean fclean re
+.PHONY:	all clean fclean re
