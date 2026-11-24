@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include <cstdlib>
+#include <sstream>
 
 template <typename T>
 static bool makeActionDependingOfNbParameter(T &leftVariable, const T &rightVariable, Client& client, const Command& command)
@@ -52,8 +53,41 @@ void Server::handleMode(Client& client, const Command& command)
 {
 	bool sign;
 	Channel *ptrChannel;
+	if (command.params.size() ==  1)
+	{
+		if (!isPrefixChannel(command.params[0][0]))
+			return ;
+		ptrChannel = findChannel(command.params[0]);
+		if(ptrChannel == NULL)
+		{
+			Server::sendNumericAnswer(client, "403" , command.params[0] + " :No such channel");//ERR_NOSUCHCHANNEL
+			return ;
+		}
+		std::string modes = "+";
+		std::string values = "";
+		if (ptrChannel->inviteOnly == true)
+			modes.append("i");
+		if (ptrChannel->topicRestricted ==true)
+			modes.append("t");
+		if (!ptrChannel->key.empty())
+		{
+			modes.append("k");
+			values.append(" " + ptrChannel->key);
+		}
+		if (ptrChannel->memberLimit != 0)
+		{
+			modes.append("l");
+			std::ostringstream oss;
+			oss << ptrChannel->memberLimit;
+			values.append(" " + oss.str());
+		}
+		sendNumericAnswer(client, "324", ptrChannel->name + " " + modes + values);
+		return ;
+	}
 	if(command.params.size() > 1 && command.params[1].size()==2 && (command.params[1][0] =='-' || command.params[1][0] =='+'))
 	{
+		if (!isPrefixChannel(command.params[0][0]))
+			return ;
 		ptrChannel = findChannel(command.params[0]);
 		if(ptrChannel == NULL)
 		{
