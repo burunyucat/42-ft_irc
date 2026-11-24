@@ -4,110 +4,110 @@
 
 ## Description
 
-ft_irc, c'est notre propre serveur IRC, écrit en C++98. L'idée du sujet est simple sur le papier : un vrai client IRC doit pouvoir se connecter à notre serveur, s'authentifier, rejoindre des salons et discuter avec les autres, comme sur n'importe quel serveur IRC.
+ft_irc is our own IRC server, written in C++98. The idea is simple on paper: a real IRC client should be able to connect to our server, authenticate, join channels and talk with other people, just like on any other IRC server.
 
-En pratique, ça oblige à mettre les mains dans pas mal de choses :
+In practice, it means getting your hands dirty with quite a few things:
 
-- les sockets TCP et la gestion de plusieurs clients en même temps, sans `fork()` et sans threads, avec un seul `poll()` ;
-- des I/O non bloquantes, avec des commandes qui peuvent arriver en morceaux (ou plusieurs d'un coup) ;
-- le protocole IRC lui-même : le format des messages, les réponses numériques, et tout ce que le client attend pour être content.
+- TCP sockets and handling many clients at the same time, without `fork()` and without threads, using a single `poll()`;
+- non-blocking I/O, with commands that can arrive in pieces (or several at once);
+- the IRC protocol itself: message format, numeric replies, and everything the client expects to keep it happy.
 
-Le serveur gère l'authentification par mot de passe, les pseudos, les messages privés et les salons, avec des opérateurs de salon et les modes demandés par le sujet.
+The server handles password authentication, nicknames, private messages and channels, with channel operators and the modes required by the subject.
 
-### Commandes supportées
+### Supported commands
 
-| Commande | Ce qu'elle fait |
+| Command | What it does |
 |---|---|
-| `PASS` | Donne le mot de passe du serveur (obligatoire avant le reste) |
-| `NICK` | Choisit ou change de pseudo |
-| `USER` | Termine l'enregistrement |
-| `JOIN` | Rejoint un salon (et le crée s'il n'existe pas) |
-| `PART` | Quitte un salon |
-| `PRIVMSG` | Envoie un message à quelqu'un ou à un salon |
-| `NOTICE` | Pareil, mais sans réponse automatique en retour |
-| `TOPIC` | Affiche ou modifie le sujet d'un salon |
-| `INVITE` | Invite quelqu'un dans un salon |
-| `KICK` | Éjecte quelqu'un d'un salon |
-| `MODE` | Change les modes d'un salon |
-| `PING` / `PONG` | Vérifie que la connexion est toujours en vie |
-| `QUIT` | Se déconnecte proprement |
+| `PASS` | Sends the server password (required before anything else) |
+| `NICK` | Sets or changes your nickname |
+| `USER` | Completes the registration |
+| `JOIN` | Joins a channel (and creates it if it doesn't exist) |
+| `PART` | Leaves a channel |
+| `PRIVMSG` | Sends a message to a user or a channel |
+| `NOTICE` | Same thing, but never triggers an automatic reply |
+| `TOPIC` | Shows or changes a channel's topic |
+| `INVITE` | Invites someone to a channel |
+| `KICK` | Kicks someone out of a channel |
+| `MODE` | Changes a channel's modes |
+| `PING` / `PONG` | Checks that the connection is still alive |
+| `QUIT` | Disconnects cleanly |
 
-### Modes de salon
+### Channel modes
 
-| Mode | Effet |
+| Mode | Effect |
 |---|---|
-| `i` | Salon sur invitation uniquement |
-| `t` | Seuls les opérateurs peuvent changer le topic |
-| `k` | Mot de passe pour rejoindre le salon |
-| `o` | Donne ou retire le statut d'opérateur |
-| `l` | Limite le nombre de membres |
+| `i` | Invite-only channel |
+| `t` | Only operators can change the topic |
+| `k` | Password required to join the channel |
+| `o` | Gives or takes operator status |
+| `l` | Limits the number of members |
 
-`+` active un mode, `-` le retire. Par exemple : `MODE #salon +k secret` ou `MODE #salon -l`.
+`+` turns a mode on, `-` turns it off. For example: `MODE #channel +k secret` or `MODE #channel -l`.
 
 ## Instructions
 
-### Compilation
+### Build
 
 ```bash
 make
 ```
 
-Ça produit l'exécutable `ircserv`. Les règles habituelles sont là aussi : `clean`, `fclean` et `re`.
+This builds the `ircserv` executable. The usual rules are there too: `clean`, `fclean` and `re`.
 
-### Lancement
+### Run
 
 ```bash
 ./ircserv <port> <password>
 ```
 
-- `port` : le port d'écoute (entre 1 et 65535, par exemple `6667`) ;
-- `password` : le mot de passe que chaque client devra donner pour se connecter.
+- `port`: the listening port (between 1 and 65535, e.g. `6667`);
+- `password`: the password every client has to give to connect.
 
 ```bash
-./ircserv 6667 motdepasse
+./ircserv 6667 mypassword
 ```
 
-### Se connecter avec un client IRC
+### Connecting with an IRC client
 
-Avec irssi par exemple :
+With irssi, for example:
 
 ```text
-/connect localhost 6667 motdepasse
+/connect localhost 6667 mypassword
 ```
 
-### Tester à la main avec `nc`
+### Testing by hand with `nc`
 
-Pour voir ce qui se passe vraiment, `nc` reste le plus pratique :
+To see what's really going on, `nc` is still the handiest tool:
 
 ```bash
 nc -C localhost 6667
 ```
 
-Puis on tape les commandes une par une :
+Then type the commands one by one:
 
 ```text
-PASS motdepasse
+PASS mypassword
 NICK alice
 USER alice 0 * :Alice
 JOIN #test
-PRIVMSG #test :salut tout le monde
+PRIVMSG #test :hi everyone
 ```
 
-Le `-C` sert à envoyer `\r\n` en fin de ligne, comme un vrai client. Pour vérifier que le serveur gère bien les commandes coupées en morceaux, on peut taper une partie de la commande, faire `Ctrl+D`, puis la suite : le serveur doit attendre la fin de la ligne avant de la traiter.
+`-C` makes `nc` end each line with `\r\n`, like a real client. To check that the server handles commands split into pieces, type part of a command, hit `Ctrl+D`, then type the rest: the server should wait for the end of the line before processing it.
 
-### Pour aller plus loin
+### Going further
 
-Le fonctionnement interne (couche TCP, boucle `poll()`, buffers, parser, dispatch des commandes) est détaillé dans [ARCHITECTURE.md](ARCHITECTURE.md).
+The internals (TCP layer, `poll()` loop, buffers, parser, command dispatch) are described in detail in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Resources
 
-Ce qui nous a le plus servi pendant le projet :
+What helped us the most during the project:
 
-- [C++ Socket Programming (TutorialsPoint)](https://www.tutorialspoint.com/cplusplus/cpp_socket_programming.htm) : un bon point de départ pour comprendre `socket()`, `bind()`, `listen()` et `accept()` avant d'attaquer `poll()`.
-- [RFC 2812 – Internet Relay Chat: Client Protocol](https://www.rfc-editor.org/info/rfc2812/#section-3.2.1) : la référence pour le format des commandes et les réponses numériques. La section 3.2 sur les opérations de salon (`JOIN`, `PART`, `MODE`, `TOPIC`, `INVITE`, `KICK`) a été notre point d'appui pour toute la gestion des salons.
-- [IRC Commands Cheat Sheet (ircbits)](https://ircbits.com/articles/irc-commands-cheat-sheet) : un résumé rapide des commandes côté utilisateur, pratique pour savoir quoi tester.
-- [IRCnet Webchat](https://webchat.ircnet.net/) : un client web branché sur un vrai réseau IRC. On s'en est servi pour comparer avec le comportement d'un « vrai » serveur quand on avait un doute sur une réponse.
+- [C++ Socket Programming (TutorialsPoint)](https://www.tutorialspoint.com/cplusplus/cpp_socket_programming.htm): a good starting point to understand `socket()`, `bind()`, `listen()` and `accept()` before tackling `poll()`.
+- [RFC 2812 – Internet Relay Chat: Client Protocol](https://www.rfc-editor.org/info/rfc2812/#section-3.2.1): the reference for command format and numeric replies. Section 3.2 on channel operations (`JOIN`, `PART`, `MODE`, `TOPIC`, `INVITE`, `KICK`) was what we leaned on for all the channel handling.
+- [IRC Commands Cheat Sheet (ircbits)](https://ircbits.com/articles/irc-commands-cheat-sheet): a quick summary of user-side commands, handy to know what to test.
+- [IRCnet Webchat](https://webchat.ircnet.net/): a web client connected to a real IRC network. We used it to compare with how a "real" server behaves whenever we weren't sure about a reply.
 
-### Utilisation de l'IA
+### Use of AI
 
-On a utilisé l'IA surtout comme support : pour reformuler des passages de la RFC, nous aider à comprendre certains comportements attendus par les clients IRC, et relire la documentation. Le code a été écrit, testé et compris par nous, et tout ce qui venait d'une suggestion a été vérifié avant d'être gardé.
+We mostly used AI as a support tool: to rephrase parts of the RFC, help us understand some behaviors IRC clients expect, and proofread the documentation. The code was written, tested and understood by us, and anything that came from a suggestion was checked before we kept it.
