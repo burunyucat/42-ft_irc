@@ -6,27 +6,36 @@ void Server::handleNotice(Client& client, const Command& command)
 		return;
 	if (command.params.size() < 2 || command.params[1] == "")
 		return;
-	std::string msg = fullName(client) + " " + command.name + " " + command.params[0] + " :";
-	for (size_t i = 1; i < command.params.size(); i++)
+	std::string txt = "";
+		for (size_t i = 1; i < command.params.size(); i++)
 	{
-		msg.append(command.params[i]);
+		txt.append(command.params[i]);
 		if (i != command.params.size() - 1)
-			msg.append(" ");
+			txt.append(" ");
 	}
-	if (command.params[0][0] == '#')
+	std::vector<std::string> targets;
+	splitComma(command.params[0], targets);
+	for (std::vector<std::string>::iterator target = targets.begin(); target != targets.end(); ++target)
 	{
-		Channel *dest = findChannel(command.params[0]);
-		if (!dest)
-			return;
-		else if (!isMember(client.fd, *dest))
-			return;
-		broadcast(*dest, msg, client.fd);
-	}
-	else
-	{
-		Client *dest_f = findClientByNick(command.params[0]);
-		if (!dest_f || !dest_f->registered)
-			return;
-		rawMessage(*dest_f, msg);
+		const std::string &name = *target;
+		if (name.empty() == true || name == "")
+			continue;
+		std::string msg = fullName(client) + " " + command.name + " " + name + " :" + txt;
+		if (isPrefixChannel(name[0]))
+		{
+			Channel *dest = findChannel(name);
+			if (!dest)
+				continue;
+			else if (!isMember(client.fd, *dest))
+				continue;
+			broadcast(*dest, msg, client.fd);
+		}
+		else
+		{
+			Client *dest_f = findClientByNick(name);
+			if (!dest_f || !dest_f->registered)
+				continue;
+			rawMessage(*dest_f, msg);
+		}
 	}
 }

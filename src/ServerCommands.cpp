@@ -101,6 +101,10 @@ void Server::executeCommand(Client& client, const Command& command)
 {
 	if (command.name.empty())
 		return ;
+	if (command.name == "CAP")
+		return ;
+	if (command.name == "JOIN" && client.registered == false && (command.params.empty() == true || command.params[0] == ""))
+		return ;
 	std::map<std::string, Handler>::iterator it = this->m_commandHandler.find(command.name);
 	if (it == this->m_commandHandler.end())
 		this->sendNumericAnswer(client, "421", command.name + " :Unknown command");

@@ -78,10 +78,19 @@ void Server::broadcast(const Channel &channel, const std::string &message, int e
 
 Channel *Server::findChannel(const std::string &name)
 {
-	std::map<std::string, Channel>::iterator it = this->m_channelRegistry.find(name);
-	if (it == m_channelRegistry.end())
-		return NULL;
-	return &it->second;
+	// Channel names are case insensitive (RFC 2812, 1.3): "#Test" and "#test" are the same channel.
+	std::string	tested = name;
+	for (size_t j = 0; j < name.length(); j++)
+		tested[j] = tolower(name[j]);
+	for (std::map<std::string, Channel>::iterator it = this->m_channelRegistry.begin(); it != this->m_channelRegistry.end(); ++it)
+	{
+		std::string registered = it->first;
+		for (size_t i = 0; i < it->first.length(); i++)
+			registered[i] = tolower(it->first[i]);
+		if (tested == registered)
+			return &it->second;
+	}
+	return NULL;
 }
 
 void Server::addMemberToChannelNotification(Channel &channel,Client &client)
