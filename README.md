@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by burunyucat, Menil-A.*
+*This project has been created as part of the 42 curriculum by agense, tle-rhun and meaba.*
 
 # ft_irc
 
