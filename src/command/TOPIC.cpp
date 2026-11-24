@@ -19,9 +19,15 @@ void Server::handleTopic(Client& client, const Command& command)
 				if(!ptrChannel->topicRestricted || isOperator(client.fd, *ptrChannel))
 				{
 					if(command.params[1].empty())//option for remove topic
+					{
 						ptrChannel->topic="";
+						broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " :", -1);
+					}
 					else
+					{
 						ptrChannel->topic=command.params[1];
+						broadcast(*ptrChannel, fullName(client) + " " + command.name + " " + ptrChannel->name + " :" + command.params[1], -1);
+					}
 				}
 				else
 					Server::sendNumericAnswer(client, "482" , ptrChannel->name + " :You're not channel operator");//ERR_CHANOPRIVSNEEDED
@@ -37,5 +43,5 @@ void Server::handleTopic(Client& client, const Command& command)
 		}
 	}
 	else
-		Server::sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS
+		Server::sendNumericAnswer(client, "461" , command.name + " :Not enough parameters");//ERR_NEEDMOREPARAMS
 }

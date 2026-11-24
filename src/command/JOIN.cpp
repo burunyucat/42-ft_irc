@@ -101,5 +101,5 @@ void Server::handleJoin(Client& client, const Command& command)
 		}
 	}
 	else
-		sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS
+		sendNumericAnswer(client, "461" , command.name + " :Not enough parameters");//ERR_NEEDMOREPARAMS
 }

@@ -36,17 +36,22 @@ void Server::handleKick(Client& client, const Command& command)
 					else
 						broadcast(*ptrChannel, fullName(client) +" KICK " + ptrChannel->name + " " +targetClient->nickname+ " :" + targetClient->nickname, -1);
 					removeMember(targetClient->fd, *ptrChannel);
+					if(ptrChannel->members.size() == 0)
+					{
+						std::map<std::string, Channel>::iterator it = this->m_channelRegistry.find(ptrChannel->name);
+						m_channelRegistry.erase(it);
+					}
 				}
 			}
 			else
 			{
 				if(channel.size()!=1)
-					Server::sendNumericAnswer(client, "403" , channel[i] + ":No such channel");//ERR_NOSUCHCHANNEL
+					Server::sendNumericAnswer(client, "403" , channel[i] + " :No such channel");//ERR_NOSUCHCHANNEL
 				else
-					Server::sendNumericAnswer(client, "403" , channel[0] + ":No such channel");//ERR_NOSUCHCHANNEL
+					Server::sendNumericAnswer(client, "403" , channel[0] + " :No such channel");//ERR_NOSUCHCHANNEL
 			}
 		}
 	}
 	else
-		Server::sendNumericAnswer(client, "461" , ":Not enough parameters");//ERR_NEEDMOREPARAMS
+		Server::sendNumericAnswer(client, "461" , command.name + " :Not enough parameters");//ERR_NEEDMOREPARAMS
 }
