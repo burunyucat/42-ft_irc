@@ -95,10 +95,6 @@ PRIVMSG #test :hi everyone
 
 `-C` makes `nc` end each line with `\r\n`, like a real client. To check that the server handles commands split into pieces, type part of a command, hit `Ctrl+D`, then type the rest: the server should wait for the end of the line before processing it.
 
-### Going further
-
-The internals (TCP layer, `poll()` loop, buffers, parser, command dispatch) are described in detail in [ARCHITECTURE.md](ARCHITECTURE.md).
-
 ## Resources
 
 What helped us the most during the project:
