@@ -1,346 +1,113 @@
-# Architecture du serveur ft_irc
+*This project has been created as part of the 42 curriculum by burunyucat, Menil-A.*
 
-Le serveur IRC est divisé en deux grandes parties :
+# ft_irc
 
-- **La couche réseau (TCP)** : gère les connexions et le transport des données entre les clients IRC et le serveur.
-- **La couche IRC** : interprète les commandes reçues, applique les règles du protocole IRC et gère l'état du serveur (utilisateurs, salons, permissions, etc.).
+## Description
 
-Cette séparation permet de distinguer la communication réseau de la logique applicative.
+ft_irc, c'est notre propre serveur IRC, écrit en C++98. L'idée du sujet est simple sur le papier : un vrai client IRC doit pouvoir se connecter à notre serveur, s'authentifier, rejoindre des salons et discuter avec les autres, comme sur n'importe quel serveur IRC.
 
-## 1. Couche TCP
+En pratique, ça oblige à mettre les mains dans pas mal de choses :
 
-La couche TCP est responsable de la communication réseau entre les clients IRC et le serveur.
+- les sockets TCP et la gestion de plusieurs clients en même temps, sans `fork()` et sans threads, avec un seul `poll()` ;
+- des I/O non bloquantes, avec des commandes qui peuvent arriver en morceaux (ou plusieurs d'un coup) ;
+- le protocole IRC lui-même : le format des messages, les réponses numériques, et tout ce que le client attend pour être content.
 
-Elle s'occupe notamment de :
+Le serveur gère l'authentification par mot de passe, les pseudos, les messages privés et les salons, avec des opérateurs de salon et les modes demandés par le sujet.
 
-- Créer et configurer les sockets.
-- Accepter les nouvelles connexions TCP.
-- Surveiller les sockets grâce à `poll()`.
-- Recevoir les octets avec `recv()` et les stocker dans les buffers d'entrée.
-- Extraire les commandes IRC complètes pour les transmettre au parser.
-- Envoyer les réponses préparées par la couche IRC avec `send()`.
-- Gérer les déconnexions et les erreurs réseau.
+### Commandes supportées
 
-### 1.1 Les sockets
-
-Le serveur possède deux types de sockets :
-
-**Socket d'écoute (listening socket)**
-
-Créée au démarrage du serveur, elle est associée à une adresse IP et à un port grâce à `bind()`, puis placée en écoute avec `listen()`.
-
-Elle sert uniquement à recevoir les nouvelles demandes de connexion TCP.
-
-Lorsqu'une connexion est disponible, `accept()` retourne une nouvelle socket dédiée au client. La socket d'écoute reste disponible pour les prochaines connexions.
-
-**Sockets clients (connected sockets)**
-
-Chaque client connecté possède une socket TCP dédiée côté serveur.
-
-Ces sockets servent à recevoir les données envoyées par les clients et à leur transmettre des réponses.
-
-Sous Linux, chaque socket est identifiée dans le programme par un **file descriptor (FD)**.
-
-L'acceptation d'une connexion TCP ne signifie pas que l'utilisateur est authentifié auprès du serveur IRC. L'authentification intervient ensuite, dans la couche IRC.
-
-### 1.2 La boucle événementielle et `poll()`
-
-Le serveur doit gérer plusieurs clients simultanément, sans utiliser `fork()` et sans bloquer les opérations réseau.
-
-Pour cela, il utilise une **boucle événementielle** reposant sur `poll()` et des sockets non bloquantes.
-
-`poll()` permet de surveiller plusieurs file descriptors en un seul appel et d'identifier ceux sur lesquels des opérations sont possibles.
-
-Chaque socket surveillée est représentée par une structure `pollfd` contenant :
-
-- `fd` : le descripteur à surveiller.
-- `events` : les événements que le programme souhaite surveiller.
-- `revents` : les événements détectés par le noyau.
-
-Principaux événements :
-
-| Événement | Signification |
+| Commande | Ce qu'elle fait |
 |---|---|
-| `POLLIN` | Lecture possible ou connexion en attente d'acceptation |
-| `POLLOUT` | Écriture possible sans blocage |
-| `POLLHUP` | Condition de fermeture signalée |
-| `POLLERR` | Erreur sur le descripteur |
-| `POLLNVAL` | Descripteur invalide |
+| `PASS` | Donne le mot de passe du serveur (obligatoire avant le reste) |
+| `NICK` | Choisit ou change de pseudo |
+| `USER` | Termine l'enregistrement |
+| `JOIN` | Rejoint un salon (et le crée s'il n'existe pas) |
+| `PART` | Quitte un salon |
+| `PRIVMSG` | Envoie un message à quelqu'un ou à un salon |
+| `NOTICE` | Pareil, mais sans réponse automatique en retour |
+| `TOPIC` | Affiche ou modifie le sujet d'un salon |
+| `INVITE` | Invite quelqu'un dans un salon |
+| `KICK` | Éjecte quelqu'un d'un salon |
+| `MODE` | Change les modes d'un salon |
+| `PING` / `PONG` | Vérifie que la connexion est toujours en vie |
+| `QUIT` | Se déconnecte proprement |
 
-**Gestion de `POLLIN`**
+### Modes de salon
 
-Les sockets des clients actifs sont normalement surveillées en permanence avec `POLLIN`, puisqu'un client peut envoyer des données à tout moment.
-
-Lorsqu'un `POLLIN` est détecté, le serveur utilise `recv()` pour récupérer les octets disponibles.
-
-Pour la socket d'écoute, cet événement indique qu'une connexion peut être acceptée avec `accept()`.
-
-**Gestion de `POLLOUT`**
-
-`POLLOUT` est surveillé pour un client uniquement lorsque son `outputBuffer` contient des données en attente d'envoi.
-
-Il indique que le buffer d'envoi TCP du noyau dispose de place pour accepter des données.
-
-Surveiller constamment `POLLOUT` serait inefficace : une socket TCP est généralement prête en écriture, même lorsque le serveur n'a rien à envoyer. `poll()` retournerait donc immédiatement et provoquerait une consommation inutile de CPU (*busy waiting*).
-
-**Fonctionnement de la boucle événementielle**
-
-1. Le serveur prépare les événements à surveiller.
-2. Il appelle `poll()`, qui attend qu'un événement soit disponible.
-3. Le noyau renseigne les champs `revents` des descripteurs concernés.
-4. Le serveur parcourt les événements et effectue les opérations appropriées (`accept()`, `recv()`, `send()`, etc.).
-5. Il recommence la boucle.
-
-Cette architecture permet de gérer de nombreux clients avec un seul thread, sans exécuter leurs opérations en parallèle.
-
-`poll()` ne réalise pas lui-même les lectures et écritures : il signale uniquement leur disponibilité.
-
-### 1.3 Les buffers
-
-Chaque client possède deux buffers applicatifs, stockés côté serveur :
-
-- **`inputBuffer`** : conserve les octets reçus du client qui n'ont pas encore été entièrement traités.
-- **`outputBuffer`** : conserve les octets que le serveur doit transmettre au client.
-
-Ces buffers sont distincts des buffers TCP internes gérés automatiquement par le noyau Linux.
-
-**Réception (`inputBuffer`)**
-
-TCP transporte un flux d'octets et ne garantit pas qu'un appel à `recv()` corresponde à une commande IRC complète.
-
-Par exemple, le serveur peut recevoir :
-
-```text
-NICK Alice\r\nJOIN #general\r\nPRIVMSG Bob :Bonj
-```
-
-Dans cet exemple :
-
-- `NICK Alice` est une commande complète.
-- `JOIN #general` est une commande complète.
-- `PRIVMSG Bob :Bonj` est une commande incomplète.
-
-Le serveur recherche les délimiteurs `\r\n`, extrait chaque commande complète et la transmet individuellement au parser.
-
-Les octets restants sont conservés dans l'`inputBuffer` jusqu'à la prochaine réception.
-
-**Envoi (`outputBuffer`)**
-
-Lorsqu'une commande IRC nécessite une réponse ou une notification, celle-ci est ajoutée à l'`outputBuffer` du client destinataire.
-
-Le serveur surveille alors `POLLOUT` sur sa socket et utilise `send()` pour transférer les octets vers le buffer d'envoi TCP du noyau.
-
-Un appel à `send()` peut n'accepter qu'une partie des données. Les octets restants doivent donc être conservés dans l'`outputBuffer` pour un prochain envoi.
-
-Une fois le buffer vidé, la surveillance de `POLLOUT` peut être désactivée pour ce client.
-
-## 2. Couche IRC
-
-La couche IRC est responsable de l'interprétation des commandes et de l'application des règles du protocole.
-
-Elle comprend principalement le parser, le gestionnaire de commandes et les structures représentant l'état du serveur.
-
-### 2.1 Parser
-
-Le parser reçoit les commandes IRC complètes extraites des `inputBuffer` par la couche réseau.
-
-Son rôle consiste à analyser leur syntaxe et à les transformer en données structurées, représentées par exemple par une structure `Command`.
-
-```cpp
-struct Command
-{
-    std::string name;
-    std::vector<std::string> params;
-};
-```
-
-- `name` : nom de la commande.
-- `params` : paramètres de la commande.
-
-Par exemple, pour la ligne :
-
-```text
-PRIVMSG Bob :Bonjour Alice
-```
-
-Le parser produit :
-
-```text
-name = "PRIVMSG"
-params[0] = "Bob"
-params[1] = "Bonjour Alice"
-```
-
-Le parser ne réalise aucune opération sur les salons ou les utilisateurs. Il se limite à l'analyse syntaxique.
-
-La commande structurée est ensuite transmise au gestionnaire de commandes, accompagnée de l'identité du client qui l'a envoyée.
-
-### 2.2 Gestionnaire de commandes (CommandHandler)
-
-Le gestionnaire de commandes est responsable de l'exécution des commandes IRC après leur interprétation par le parser.
-
-Il vérifie leur validité, l'état du client et ses permissions, puis applique les opérations demandées : création et gestion des salons, envoi de messages, modification des modes, expulsion de membres, etc.
-
-Il peut ainsi :
-
-- Consulter l'état du serveur.
-- Modifier les informations des clients et des salons.
-- Préparer des réponses ou notifications IRC.
-- Ajouter ces réponses aux buffers de sortie des clients concernés.
-
-La couche réseau se charge ensuite de leur transmission avec `poll()` et `send()`.
-
-**Commandes à gérer**
-
-| Commande | Responsabilité |
+| Mode | Effet |
 |---|---|
-| `PASS` | Vérifier le mot de passe du serveur |
-| `NICK` | Définir ou changer le pseudonyme |
-| `USER` | Enregistrer les informations de l'utilisateur |
-| `JOIN` | Rejoindre un salon, le créer si nécessaire et vérifier les restrictions |
-| `PRIVMSG` | Envoyer un message à un utilisateur ou aux membres d'un salon |
-| `KICK` | Expulser un membre d'un salon |
-| `INVITE` | Inviter un utilisateur dans un salon |
-| `TOPIC` | Consulter ou modifier le sujet d'un salon |
-| `MODE` | Consulter ou modifier les modes d'un salon et les privilèges des membres |
+| `i` | Salon sur invitation uniquement |
+| `t` | Seuls les opérateurs peuvent changer le topic |
+| `k` | Mot de passe pour rejoindre le salon |
+| `o` | Donne ou retire le statut d'opérateur |
+| `l` | Limite le nombre de membres |
 
-**Modes de salon à gérer**
+`+` active un mode, `-` le retire. Par exemple : `MODE #salon +k secret` ou `MODE #salon -l`.
 
-| Mode | Responsabilité |
-|---|---|
-| `i` | Entrée uniquement sur invitation |
-| `t` | Modification du topic réservée aux opérateurs |
-| `k` | Clé d'entrée du salon |
-| `o` | Attribution ou retrait du statut d'opérateur |
-| `l` | Limitation du nombre de membres |
+## Instructions
 
-Le signe `+` active ou ajoute un mode, tandis que le signe `-` le désactive ou le retire.
+### Compilation
 
-**Commandes supplémentaires recommandées**
-
-- `PART` : quitter un salon sans se déconnecter du serveur.
-- `QUIT` : quitter le serveur proprement.
-- `PING` : vérifier la disponibilité d'une connexion.
-- `PONG` : répondre à un `PING`.
-
-Certaines commandes supplémentaires peuvent être nécessaires pour assurer la compatibilité avec le client IRC de référence.
-
-### 2.3 État interne du serveur
-
-Le serveur conserve en mémoire les informations nécessaires au fonctionnement du protocole IRC.
-
-Trois composants principaux peuvent être utilisés :
-
-**`Server`**
-
-Représente le serveur et coordonne son fonctionnement.
-
-Il peut contenir :
-
-- La socket d'écoute.
-- La liste des file descriptors surveillés.
-- La collection des clients connectés.
-- La collection des salons existants.
-- La boucle événementielle et les méthodes réseau.
-
-**`Client`**
-
-Représente un client connecté au serveur.
-
-Il peut contenir :
-
-- Son file descriptor.
-- Son pseudonyme et son nom d'utilisateur.
-- Son état d'authentification et d'enregistrement.
-- Son `inputBuffer`.
-- Son `outputBuffer`.
-
-Un client TCP connecté n'est pas nécessairement un utilisateur IRC déjà enregistré.
-
-**`Channel`**
-
-Représente un salon IRC.
-
-Il peut contenir :
-
-- Son nom.
-- Son topic.
-- La liste de ses membres.
-- La liste de ses opérateurs.
-- La liste des utilisateurs invités.
-- Ses modes et restrictions.
-
-Un channel est uniquement une structure logique conservée en mémoire. Sa création ne nécessite aucune nouvelle socket, aucun thread et aucun processus.
-
-### 2.4 Synchronisation entre le serveur et les clients
-
-Le serveur détient l'état réel des utilisateurs et des salons.
-
-Les clients IRC ne peuvent pas accéder directement aux structures `Client` ou `Channel` du serveur. Ils construisent leur représentation locale à partir des réponses et notifications IRC reçues.
-
-Par exemple, lorsqu'Alice crée un salon avec :
-
-```text
-JOIN #gaming
+```bash
+make
 ```
 
-Le serveur :
+Ça produit l'exécutable `ircserv`. Les règles habituelles sont là aussi : `clean`, `fclean` et `re`.
 
-1. Vérifie si le salon existe et le crée si nécessaire.
-2. Ajoute Alice à ses membres et lui attribue les droits d'opérateur si elle vient de créer le salon.
-3. Prépare une notification `JOIN`.
-4. Ajoute les réponses nécessaires dans `alice.outputBuffer`.
-5. Transmet ces réponses via la couche TCP.
+### Lancement
 
-Le client d'Alice peut alors mettre à jour son interface.
+```bash
+./ircserv <port> <password>
+```
 
-Le même principe s'applique lors d'une expulsion, d'un changement de topic ou de la modification des modes.
+- `port` : le port d'écoute (entre 1 et 65535, par exemple `6667`) ;
+- `password` : le mot de passe que chaque client devra donner pour se connecter.
 
-**Modifier uniquement l'état interne du serveur ne suffit donc pas : les clients concernés doivent également recevoir les notifications prévues par le protocole IRC.**
+```bash
+./ircserv 6667 motdepasse
+```
 
-Cela ne signifie pas que chaque modification interne doit être communiquée à tous les clients. Les destinataires et les réponses dépendent de la commande et des règles du protocole.
+### Se connecter avec un client IRC
 
-### 2.5 Stockage des messages
+Avec irssi par exemple :
 
-Le sujet ne demande pas d'implémenter un historique persistant des discussions.
+```text
+/connect localhost 6667 motdepasse
+```
 
-Les messages sont généralement transmis aux destinataires concernés, puis supprimés des buffers applicatifs une fois acceptés par la couche TCP.
+### Tester à la main avec `nc`
 
-Il faut donc conserver temporairement les données en attente d'envoi, mais pas nécessairement enregistrer tous les messages échangés dans une base de données ou un fichier.
+Pour voir ce qui se passe vraiment, `nc` reste le plus pratique :
 
-## 3. Cycle complet d'une commande IRC
+```bash
+nc -C localhost 6667
+```
 
-Exemple : Alice envoie `PRIVMSG Bob :Salut !`.
+Puis on tape les commandes une par une :
 
-1. Le client IRC d'Alice transmet la commande via sa connexion TCP.
-2. `poll()` détecte `POLLIN` sur la socket d'Alice.
-3. `recv()` récupère les octets et les ajoute à `alice.inputBuffer`.
-4. Une fois `\r\n` détecté, la commande complète est extraite.
-5. Le parser transforme la ligne en structure `Command`.
-6. Le `CommandHandler` vérifie les informations et applique la logique IRC.
-7. Le serveur construit le message destiné à Bob et l'ajoute à `bob.outputBuffer`.
-8. La surveillance de `POLLOUT` est activée pour Bob.
-9. `poll()` signale que la socket de Bob est prête en écriture.
-10. `send()` transfère les octets vers le buffer d'envoi TCP du noyau, qui se charge de leur transmission.
+```text
+PASS motdepasse
+NICK alice
+USER alice 0 * :Alice
+JOIN #test
+PRIVMSG #test :salut tout le monde
+```
 
-Le processus fonctionne également pour les commandes qui modifient l'état du serveur, comme `JOIN`, `KICK`, `TOPIC` ou `MODE`.
+Le `-C` sert à envoyer `\r\n` en fin de ligne, comme un vrai client. Pour vérifier que le serveur gère bien les commandes coupées en morceaux, on peut taper une partie de la commande, faire `Ctrl+D`, puis la suite : le serveur doit attendre la fin de la ligne avant de la traiter.
 
-Dans ces cas, l'exécution de la commande peut modifier les données internes et générer des notifications destinées à un ou plusieurs clients.
+### Pour aller plus loin
 
-## 4. Contraintes techniques importantes
+Le fonctionnement interne (couche TCP, boucle `poll()`, buffers, parser, dispatch des commandes) est détaillé dans [ARCHITECTURE.md](ARCHITECTURE.md).
 
-Le projet ft_irc impose notamment :
+## Resources
 
-- L'utilisation du standard **C++98**.
-- Les communications via TCP/IP (IPv4 ou IPv6).
-- La gestion de plusieurs clients sans blocage.
-- L'interdiction de `fork()`.
-- L'utilisation d'un seul mécanisme de multiplexage `poll()` ou équivalent pour les opérations réseau.
-- Des opérations d'entrée/sortie non bloquantes.
-- Le déclenchement des lectures et écritures en fonction des événements remontés par `poll()`.
-- La gestion des données reçues partiellement ou de plusieurs commandes reçues simultanément.
-- La gestion correcte des erreurs et des déconnexions.
+Ce qui nous a le plus servi pendant le projet :
 
-Il ne faut pas utiliser `errno`, après une lecture ou une écriture, pour décider de relancer de nouvelles opérations, conformément aux contraintes spécifiques du sujet.
+- [C++ Socket Programming (TutorialsPoint)](https://www.tutorialspoint.com/cplusplus/cpp_socket_programming.htm) : un bon point de départ pour comprendre `socket()`, `bind()`, `listen()` et `accept()` avant d'attaquer `poll()`.
+- [RFC 2812 – Internet Relay Chat: Client Protocol](https://www.rfc-editor.org/info/rfc2812/#section-3.2.1) : la référence pour le format des commandes et les réponses numériques. La section 3.2 sur les opérations de salon (`JOIN`, `PART`, `MODE`, `TOPIC`, `INVITE`, `KICK`) a été notre point d'appui pour toute la gestion des salons.
+- [IRC Commands Cheat Sheet (ircbits)](https://ircbits.com/articles/irc-commands-cheat-sheet) : un résumé rapide des commandes côté utilisateur, pratique pour savoir quoi tester.
+- [IRCnet Webchat](https://webchat.ircnet.net/) : un client web branché sur un vrai réseau IRC. On s'en est servi pour comparer avec le comportement d'un « vrai » serveur quand on avait un doute sur une réponse.
 
-L'objectif est de disposer d'un serveur capable de maintenir plusieurs connexions TCP, d'interpréter correctement les commandes IRC et de garder son état cohérent tout en communiquant les informations nécessaires aux clients.
+### Utilisation de l'IA
+
+On a utilisé l'IA surtout comme support : pour reformuler des passages de la RFC, nous aider à comprendre certains comportements attendus par les clients IRC, et relire la documentation. Le code a été écrit, testé et compris par nous, et tout ce qui venait d'une suggestion a été vérifié avant d'être gardé.
